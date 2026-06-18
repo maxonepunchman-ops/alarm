@@ -23,56 +23,71 @@ body{
     -webkit-user-select:none;user-select:none;
 }
 #app{width:100%;max-width:430px;height:100%;height:-webkit-fill-available;position:relative;overflow:hidden}
-
 .screen{
     position:absolute;inset:0;display:flex;flex-direction:column;
     align-items:center;justify-content:center;
-    padding:28px 22px;gap:18px;
-    opacity:0;pointer-events:none;transition:opacity 0.25s;
+    padding:28px 22px;gap:16px;
+    opacity:0;pointer-events:none;transition:opacity 0.22s;
 }
 .screen.active{opacity:1;pointer-events:all}
 
-/* --- Buttons --- */
+/* ── Buttons ── */
 .btn{
     width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
     padding:16px 20px;border-radius:16px;border:none;
     font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;
-    transition:transform .1s,opacity .1s;letter-spacing:.2px;
+    transition:transform .12s,opacity .12s;letter-spacing:.2px;
     touch-action:manipulation;-webkit-touch-callout:none;
 }
 .btn:active{transform:scale(.96);opacity:.8}
 .btn-pri{background:linear-gradient(135deg,var(--or),var(--red));color:#fff}
 .btn-sec{background:var(--s2);color:var(--txt);border:1px solid var(--brd)}
 .btn-danger{background:linear-gradient(135deg,#cc0030,#ff0040);color:#fff;font-size:17px;padding:18px;border-radius:18px}
-.btn-math{background:linear-gradient(135deg,#2255cc,#4488ff);color:#fff;font-size:17px;padding:18px;border-radius:18px}
+.btn-blue{background:linear-gradient(135deg,#2255cc,#4488ff);color:#fff;font-size:17px;padding:18px;border-radius:18px}
 .btn-sm{padding:11px;font-size:13px}
-.btn-grn{background:var(--grn);color:#000;font-size:18px;padding:18px;border-radius:18px}
-
-.lbl{width:100%;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);margin-bottom:-8px}
+.lbl{width:100%;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);margin-bottom:-6px}
 .warn{width:100%;background:rgba(255,180,0,.08);border:1px solid rgba(255,180,0,.25);border-radius:12px;padding:10px 14px;font-size:12px;color:#ffcc44;text-align:center;line-height:1.5}
 
-/* ===== WELCOME ===== */
-#screen-welcome{text-align:center;gap:20px}
+/* ── Welcome ── */
+#screen-welcome{text-align:center;gap:18px}
 .wlc-em{font-size:86px;line-height:1}
 .wlc-ttl{font-size:40px;font-weight:800;background:linear-gradient(135deg,var(--or),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .wlc-sub{color:var(--dim);font-size:14px;line-height:1.6;max-width:280px}
 
-/* ===== SETUP ===== */
-#screen-setup{justify-content:flex-start;padding-top:52px}
+/* ── Setup ── */
+#screen-setup{justify-content:flex-start;padding-top:50px}
 .cur-time{font-size:50px;font-weight:200;letter-spacing:2px;font-variant-numeric:tabular-nums;text-align:center;width:100%}
 .time-wrap{width:100%;background:var(--s1);border:1px solid var(--brd);border-radius:16px;overflow:hidden}
-#alarm-time{width:100%;background:transparent;border:none;color:var(--txt);font-size:44px;font-weight:300;text-align:center;padding:10px 16px;font-family:inherit;font-variant-numeric:tabular-nums;letter-spacing:2px;-webkit-appearance:none}
+#alarm-time{width:100%;background:transparent;border:none;color:var(--txt);font-size:44px;font-weight:300;text-align:center;padding:10px 16px;font-family:inherit;font-variant-numeric:tabular-nums;letter-spacing:2px;-webkit-appearance:none;touch-action:manipulation}
 #alarm-time:focus{outline:none}
 .snd-grid{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.snd-btn{background:var(--s1);border:2px solid var(--brd);border-radius:16px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:inherit;color:var(--txt);transition:all .2s;touch-action:manipulation;-webkit-touch-callout:none}
-.snd-btn:active{transform:scale(.94)}
+.snd-btn{background:var(--s1);border:2px solid var(--brd);border-radius:16px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:inherit;color:var(--txt);transition:all .15s;touch-action:manipulation;-webkit-touch-callout:none}
+.snd-btn:active{transform:scale(.93)}
 .snd-btn.on{border-color:var(--or);background:rgba(255,107,53,.12)}
 .snd-btn .ic{font-size:28px}
 .snd-btn .nm{font-size:12px;font-weight:600;color:var(--dim)}
 .snd-btn.on .nm{color:var(--or)}
 
-/* ===== ACTIVE ===== */
-#screen-active{text-align:center;gap:20px}
+/* ── Room ── */
+#screen-room{justify-content:flex-start;padding-top:44px;gap:12px}
+.room-title{font-size:18px;font-weight:700;text-align:center}
+.room-sub{font-size:12px;color:var(--dim);text-align:center}
+.room-scroll{width:100%;overflow-y:auto;max-height:calc(100vh - 200px);display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+.room-item{
+    width:100%;display:flex;align-items:center;gap:12px;
+    background:var(--s1);border:2px solid var(--brd);border-radius:14px;
+    padding:12px 16px;cursor:pointer;transition:all .15s;
+    touch-action:manipulation;-webkit-touch-callout:none;
+}
+.room-item:active{transform:scale(.98);opacity:.8}
+.room-item.checked{border-color:var(--grn);background:rgba(0,230,118,.08)}
+.room-em{font-size:24px;flex-shrink:0}
+.room-nm{flex:1;font-size:14px;font-weight:500}
+.room-tick{font-size:18px;color:var(--dim)}
+.room-item.checked .room-tick{color:var(--grn)}
+
+/* ── Active ── */
+#screen-active{text-align:center;gap:18px}
 .act-check{font-size:58px}
 .act-time{font-size:72px;font-weight:200;font-variant-numeric:tabular-nums;letter-spacing:2px}
 .cd-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
@@ -80,62 +95,47 @@ body{
 .countdown{font-size:30px;font-weight:300;font-variant-numeric:tabular-nums;color:var(--blue);letter-spacing:2px}
 .snd-badge{background:var(--s1);border:1px solid var(--brd);border-radius:20px;padding:6px 18px;font-size:14px;color:var(--dim)}
 
-/* ===== RINGING ===== */
-#screen-ringing{text-align:center;gap:22px}
+/* ── Ringing ── */
+#screen-ringing{text-align:center;gap:20px}
 #screen-ringing.rpulse{animation:bgp .9s ease-in-out infinite}
-@keyframes bgp{0%,100%{background:#0f0008}50%{background:#200014}}
+@keyframes bgp{0%,100%{background:#0f0008}50%{background:#220015}}
 .ring-bell{font-size:100px;display:block;animation:bellshake .45s ease-in-out infinite}
 @keyframes bellshake{0%,100%{transform:rotate(-10deg) scale(1)}50%{transform:rotate(10deg) scale(1.06)}}
 .ring-ttl{font-size:44px;font-weight:900;background:linear-gradient(135deg,#ff4400,#ff005e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px}
-.ring-sub{color:var(--dim);font-size:14px;line-height:1.5;max-width:260px}
+.ring-sub{color:var(--dim);font-size:14px;line-height:1.5}
 
-/* ===== SCAN ===== */
-#screen-scan{justify-content:flex-start;padding-top:44px;gap:12px}
-.scan-hdr{font-size:18px;font-weight:700;text-align:center}
-
+/* ── Scan ── */
+#screen-scan{justify-content:flex-start;padding-top:42px;gap:12px}
+.scan-hdr{font-size:17px;font-weight:700;text-align:center}
 .targets-row{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.tgt{
-    background:var(--s1);border:2px solid var(--brd);border-radius:14px;
-    padding:10px 6px;text-align:center;display:flex;flex-direction:column;
-    align-items:center;gap:4px;transition:all .3s;
-}
+.tgt{background:var(--s1);border:2px solid var(--brd);border-radius:14px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .3s}
 .tgt.done{border-color:var(--grn);background:rgba(0,230,118,.1)}
-.tgt .tgt-em{font-size:28px}
-.tgt .tgt-nm{font-size:11px;font-weight:700;color:var(--dim);line-height:1.2}
-.tgt.done .tgt-nm{color:var(--grn)}
-.tgt.active-target{border-color:var(--or);background:rgba(255,107,53,.1);animation:targetPulse 1s ease-in-out infinite}
-@keyframes targetPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,53,.4)}50%{box-shadow:0 0 0 6px rgba(255,107,53,0)}}
-
+.tgt.cur{border-color:var(--or);background:rgba(255,107,53,.1);animation:tpulse 1s ease-in-out infinite}
+@keyframes tpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,53,.4)}50%{box-shadow:0 0 0 6px rgba(255,107,53,0)}}
+.tgt .tg-em{font-size:26px}
+.tgt .tg-nm{font-size:10px;font-weight:700;color:var(--dim);line-height:1.2}
+.tgt.done .tg-nm{color:var(--grn)}
+.tgt.cur .tg-nm{color:var(--or)}
 .cam-wrap{width:100%;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:4/3;position:relative;border:1px solid var(--brd)}
 #cam-video{width:100%;height:100%;object-fit:cover}
-.cam-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.cam-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .scan-frame{width:120px;height:120px;border:2.5px solid var(--or);border-radius:16px;animation:framep 1s ease-in-out infinite}
 @keyframes framep{0%,100%{opacity:.35;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}}
-
 .scan-hint{font-size:13px;color:var(--dim);text-align:center;min-height:18px}
-.shuffle-btn{background:none;border:1px solid var(--brd);border-radius:10px;color:var(--dim);padding:7px 16px;font-size:12px;font-family:inherit;cursor:pointer;touch-action:manipulation;-webkit-touch-callout:none}
-.shuffle-btn:active{opacity:.6}
+.scan-row{display:flex;gap:8px;width:100%}
+.sm-btn{background:none;border:1px solid var(--brd);border-radius:10px;color:var(--dim);padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;touch-action:manipulation;flex:1;text-align:center}
+.sm-btn:active{opacity:.6}
 
-/* ===== MATH ===== */
-#screen-math{justify-content:flex-start;padding-top:50px;gap:16px}
+/* ── Math ── */
+#screen-math{justify-content:flex-start;padding-top:48px;gap:14px}
 .math-prog{font-size:13px;color:var(--dim);text-align:center;font-weight:600;letter-spacing:.5px}
-.math-problem{font-size:46px;font-weight:300;text-align:center;letter-spacing:1px;font-variant-numeric:tabular-nums}
-.math-answer{
-    font-size:52px;font-weight:200;font-variant-numeric:tabular-nums;letter-spacing:2px;
-    min-height:70px;text-align:center;color:var(--or);
-    border-bottom:2px solid var(--brd);width:100%;padding-bottom:4px;
-}
-.math-answer.wrong{animation:wrongshake .4s ease}
+.math-prob{font-size:46px;font-weight:300;text-align:center;letter-spacing:1px}
+.math-ans{font-size:54px;font-weight:200;font-variant-numeric:tabular-nums;letter-spacing:2px;min-height:68px;text-align:center;color:var(--or);border-bottom:2px solid var(--brd);width:100%;padding-bottom:4px}
+.math-ans.wrong{animation:wrongshake .4s ease}
 @keyframes wrongshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
-
 .numpad{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.np-btn{
-    background:var(--s2);border:1px solid var(--brd);border-radius:16px;
-    padding:18px 0;font-size:24px;font-weight:500;color:var(--txt);
-    cursor:pointer;font-family:inherit;transition:transform .1s,background .1s;
-    touch-action:manipulation;-webkit-touch-callout:none;
-}
-.np-btn:active{transform:scale(.93);background:var(--s1)}
+.np{background:var(--s2);border:1px solid var(--brd);border-radius:16px;padding:18px 0;font-size:24px;font-weight:500;color:var(--txt);cursor:pointer;font-family:inherit;transition:transform .1s,background .1s;touch-action:manipulation;-webkit-touch-callout:none}
+.np:active{transform:scale(.92);background:var(--s1)}
 .np-del{color:var(--dim);font-size:20px}
 .np-ok{background:var(--grn);color:#000;border-color:var(--grn)}
 .np-ok:active{background:#00c060}
@@ -148,9 +148,9 @@ body{
 <div class="screen active" id="screen-welcome">
     <div class="wlc-em">⏰</div>
     <div class="wlc-ttl">WakeForce</div>
-    <div class="wlc-sub">Будильник, который не обмануть — сканирование предметов или математика</div>
+    <div class="wlc-sub">Сканирование предметов или математика — просто так не выключишь</div>
     <button class="btn btn-pri" style="font-size:18px;padding:20px;border-radius:20px" onclick="initApp()">Начать</button>
-    <div class="warn">⚠️ Уберите с беззвучного режима и держите экран включённым</div>
+    <div class="warn">⚠️ Не ставьте на беззвучный — уберите переключатель сбоку телефона</div>
 </div>
 
 <!-- SETUP -->
@@ -158,14 +158,25 @@ body{
     <div class="cur-time" id="cur-time">00:00:00</div>
     <div class="lbl">Время будильника</div>
     <div class="time-wrap"><input type="time" id="alarm-time"></div>
-    <div class="lbl">Звук сирены</div>
+    <div class="lbl">Звук</div>
     <div class="snd-grid">
         <button class="snd-btn on" onclick="pickSnd('siren',this)"><span class="ic">🚨</span><span class="nm">Сирена</span></button>
         <button class="snd-btn" onclick="pickSnd('birds',this)"><span class="ic">🐦</span><span class="nm">Птицы</span></button>
         <button class="snd-btn" onclick="pickSnd('horn',this)"><span class="ic">📯</span><span class="nm">Горн</span></button>
     </div>
     <button class="btn btn-pri" onclick="setAlarm()">Установить будильник</button>
-    <button class="btn btn-sec btn-sm" onclick="testSnd()">▶ Проверить звук (3 сек)</button>
+    <div style="display:flex;gap:8px;width:100%">
+        <button class="btn btn-sec btn-sm" style="flex:1" onclick="testSnd()">▶ Тест звука</button>
+        <button class="btn btn-sec btn-sm" style="flex:1" onclick="goRoom()">🏠 Предметы</button>
+    </div>
+</div>
+
+<!-- ROOM SETUP -->
+<div class="screen" id="screen-room">
+    <div class="room-title">Что есть в твоей комнате?</div>
+    <div class="room-sub">Будильник будет просить только эти предметы</div>
+    <div class="room-scroll" id="room-scroll"></div>
+    <button class="btn btn-pri" onclick="saveRoom()">Сохранить</button>
 </div>
 
 <!-- ACTIVE -->
@@ -180,7 +191,7 @@ body{
         <div class="countdown" id="countdown">00:00:00</div>
     </div>
     <div class="snd-badge" id="snd-badge">🚨 Сирена</div>
-    <div class="warn">⚠️ Не блокируйте экран — приложение должно быть открыто</div>
+    <div class="warn">⚠️ Держите экран включённым — приложение должно быть открыто</div>
     <button class="btn btn-sec btn-sm" onclick="cancelAlarm()">✕ Отменить будильник</button>
 </div>
 
@@ -188,66 +199,63 @@ body{
 <div class="screen" id="screen-ringing">
     <span class="ring-bell">⏰</span>
     <div class="ring-ttl">ПОДЪЁМ!</div>
-    <div class="ring-sub">Выберите способ выключить будильник:</div>
+    <div class="ring-sub">Выберите способ выключить:</div>
     <button class="btn btn-danger" onclick="goScan()">📷 Сканировать 3 предмета</button>
-    <button class="btn btn-math" onclick="goMath()">🧮 Решить 3 примера</button>
+    <button class="btn btn-blue" onclick="goMath()">🧮 Решить 3 примера</button>
 </div>
 
 <!-- SCAN -->
 <div class="screen" id="screen-scan">
     <div class="scan-hdr">Найди и покажи камерой:</div>
-    <div class="targets-row" id="targets-row">
-        <div class="tgt" id="tgt-0"><div class="tgt-em">?</div><div class="tgt-nm">—</div></div>
-        <div class="tgt" id="tgt-1"><div class="tgt-em">?</div><div class="tgt-nm">—</div></div>
-        <div class="tgt" id="tgt-2"><div class="tgt-em">?</div><div class="tgt-nm">—</div></div>
+    <div class="targets-row">
+        <div class="tgt" id="tgt-0"><div class="tg-em">?</div><div class="tg-nm">—</div></div>
+        <div class="tgt" id="tgt-1"><div class="tg-em">?</div><div class="tg-nm">—</div></div>
+        <div class="tgt" id="tgt-2"><div class="tg-em">?</div><div class="tg-nm">—</div></div>
     </div>
     <div class="cam-wrap">
         <video id="cam-video" playsinline autoplay muted></video>
-        <div class="cam-overlay"><div class="scan-frame"></div></div>
+        <div class="cam-ov"><div class="scan-frame"></div></div>
     </div>
-    <div class="scan-hint" id="scan-hint">Загрузка камеры...</div>
-    <div style="display:flex;gap:10px;width:100%">
-        <button class="shuffle-btn" onclick="reshuffleTargets()">🔀 Другие предметы</button>
-        <button class="shuffle-btn" style="margin-left:auto" onclick="backToRing()">← Назад</button>
+    <div class="scan-hint" id="scan-hint">Загрузка...</div>
+    <div class="scan-row">
+        <button class="sm-btn" onclick="reshuffleTgts()">🔀 Другие предметы</button>
+        <button class="sm-btn" onclick="backToRing()">← Назад</button>
     </div>
 </div>
 
 <!-- MATH -->
 <div class="screen" id="screen-math">
     <div class="math-prog" id="math-prog">Пример 1 / 3</div>
-    <div class="math-problem" id="math-problem">— + — = ?</div>
-    <div class="math-answer" id="math-answer">—</div>
+    <div class="math-prob" id="math-prob">— + — = ?</div>
+    <div class="math-ans" id="math-ans">—</div>
     <div class="numpad">
-        <button class="np-btn" onclick="npKey('1')">1</button>
-        <button class="np-btn" onclick="npKey('2')">2</button>
-        <button class="np-btn" onclick="npKey('3')">3</button>
-        <button class="np-btn" onclick="npKey('4')">4</button>
-        <button class="np-btn" onclick="npKey('5')">5</button>
-        <button class="np-btn" onclick="npKey('6')">6</button>
-        <button class="np-btn" onclick="npKey('7')">7</button>
-        <button class="np-btn" onclick="npKey('8')">8</button>
-        <button class="np-btn" onclick="npKey('9')">9</button>
-        <button class="np-btn np-del" onclick="npKey('←')">⌫</button>
-        <button class="np-btn" onclick="npKey('0')">0</button>
-        <button class="np-btn np-ok" onclick="npKey('✓')">✓</button>
+        <button class="np" onclick="np('1')">1</button>
+        <button class="np" onclick="np('2')">2</button>
+        <button class="np" onclick="np('3')">3</button>
+        <button class="np" onclick="np('4')">4</button>
+        <button class="np" onclick="np('5')">5</button>
+        <button class="np" onclick="np('6')">6</button>
+        <button class="np" onclick="np('7')">7</button>
+        <button class="np" onclick="np('8')">8</button>
+        <button class="np" onclick="np('9')">9</button>
+        <button class="np np-del" onclick="np('←')">⌫</button>
+        <button class="np" onclick="np('0')">0</button>
+        <button class="np np-ok" onclick="np('✓')">✓</button>
     </div>
     <button class="btn btn-sec btn-sm" onclick="backToRing()">← Назад</button>
 </div>
 
-</div><!-- #app -->
+</div>
 <script>
 // ================================================================
-//  WakeForce v2
+//  WakeForce v3
 // ================================================================
 
-const SNAMES = { siren:'🚨 Сирена', birds:'🐦 Птицы', horn:'📯 Горн' };
-
-// Pool of objects COCO-SSD reliably detects (common household items)
 const POOL = [
     {cls:'chair',     ru:'Стул',       em:'🪑'},
     {cls:'couch',     ru:'Диван',       em:'🛋️'},
     {cls:'bed',       ru:'Кровать',     em:'🛏️'},
-    {cls:'dining table', ru:'Стол',    em:'🪵'},
+    {cls:'dining table',ru:'Стол',     em:'🪵'},
     {cls:'laptop',    ru:'Ноутбук',    em:'💻'},
     {cls:'cell phone',ru:'Телефон',    em:'📱'},
     {cls:'book',      ru:'Книга',      em:'📚'},
@@ -266,190 +274,233 @@ const POOL = [
     {cls:'bowl',      ru:'Миска',      em:'🥣'},
 ];
 
-// ── state ──
-let actx = null, keepaliveNode = null;
+const SNAMES = {siren:'🚨 Сирена', birds:'🐦 Птицы', horn:'📯 Горн'};
+const ROOM_KEY = 'wf_room_v1';
+
+// ── State ──
 let sndType = 'siren';
+let alarmAudios = {};       // {siren, birds, horn} — <audio> elements
+let preAlarmAudio = null;   // Nearly-silent looping audio — keeps iOS JS alive
+let actx = null;            // Web Audio only for ping
 let alarmAt = null;
 let checkTmr = null;
-let sndNodes = [], sndTmr = null;
-let targets = [];          // [{cls,ru,em,done}]
+let targets = [];
 let tfModel = null, tfLoading = false;
 let camStream = null, detectTmr = null;
 let wlock = null;
 let mathProbs = [], mathIdx = 0, mathInput = '';
+let roomChecked = new Set();
 
-// ── screens ──
+// ── Screens ──
 function show(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + id).classList.add('active');
 }
 
-// ── audio ──
-async function ensureAudio() {
-    if (actx) {
-        if (actx.state === 'suspended') await actx.resume();
-        return;
-    }
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    actx = new Ctx();
-    if (actx.state === 'suspended') await actx.resume();
-    // Unlock with silent buffer
-    const buf = actx.createBuffer(1, 1, 22050);
-    const src = actx.createBufferSource();
-    src.buffer = buf; src.connect(actx.destination); src.start(0);
-    startKeepalive();
+// ================================================================
+//  WAV AUDIO — works on iOS regardless of silent switch
+//  (Audio element plays through media volume, not ringer)
+// ================================================================
+function mkWav(samples, sr) {
+    const n = samples.length;
+    const buf = new ArrayBuffer(44 + n * 2);
+    const v = new DataView(buf);
+    const ws = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+    ws(0,'RIFF'); v.setUint32(4, 36 + n * 2, true); ws(8,'WAVE');
+    ws(12,'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    ws(36,'data'); v.setUint32(40, n * 2, true);
+    for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.round(Math.max(-1, Math.min(1, samples[i])) * 32767), true);
+    return new Blob([buf], {type:'audio/wav'});
 }
 
-// Keep audio context alive on iOS (prevents suspension)
-function startKeepalive() {
-    if (keepaliveNode) return;
+function genSilentKeepAlive(sr) {
+    // 1 Hz sine at 0.001 amplitude — inaudible but "real" audio.
+    // iOS keeps the JS timer alive while an <audio> element is playing.
+    const n = sr * 3;
+    const s = new Float32Array(n);
+    for (let i = 0; i < n; i++) s[i] = Math.sin(2 * Math.PI * i / sr) * 0.001;
+    return mkWav(s, sr);
+}
+
+function genSiren(sr) {
+    const n = Math.round(sr * 1.7);
+    const s = new Float32Array(n);
+    let ph = 0;
+    for (let i = 0; i < n; i++) {
+        const t = i / sr, prog = t / 1.7;
+        const freq = 560 + 580 * Math.sin(Math.PI * prog);
+        s[i] = (Math.sin(ph) * 0.55 + Math.sin(ph * 0.499) * 0.3) * 0.85;
+        ph += 2 * Math.PI * freq / sr;
+    }
+    return mkWav(s, sr);
+}
+
+function genBirds(sr) {
+    const dur = 2.4, n = Math.round(sr * dur);
+    const s = new Float32Array(n);
+    const chirps = [
+        {t:.08,f:2100,d:.09},{t:.2,f:2300,d:.08},{t:.32,f:1950,d:.09},
+        {t:.5,f:1750,d:.09},{t:.62,f:1950,d:.09},{t:.74,f:2100,d:.08},
+        {t:.92,f:2500,d:.08},{t:1.02,f:2700,d:.07},{t:1.12,f:2400,d:.08},
+        {t:1.3,f:1900,d:.09},{t:1.42,f:2100,d:.09},{t:1.54,f:1800,d:.08},
+        {t:1.72,f:2200,d:.08},{t:1.84,f:2400,d:.07},{t:1.96,f:2100,d:.08},
+        {t:2.12,f:2900,d:.07},{t:2.22,f:3100,d:.06},{t:2.32,f:2700,d:.07},
+    ];
+    for (const c of chirps) {
+        const st = Math.round(c.t * sr), en = Math.round((c.t + c.d) * sr);
+        let ph = 0;
+        for (let i = st; i < en && i < n; i++) {
+            const p = (i - st) / (en - st);
+            s[i] += Math.sin(ph) * 0.5 * Math.sin(Math.PI * p);
+            ph += 2 * Math.PI * c.f / sr;
+        }
+    }
+    return mkWav(s, sr);
+}
+
+function genHorn(sr) {
+    const n = Math.round(sr * 1.0);
+    const s = new Float32Array(n);
+    const freqs = [[220,.38],[660,.19],[1100,.11],[1540,.07]];
+    const phs = freqs.map(() => 0);
+    for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        const env = t < .05 ? t / .05 : (t > .75 ? Math.max(0, 1 - (t - .75) / .25) : 1);
+        let v = 0;
+        for (let j = 0; j < freqs.length; j++) {
+            v += Math.sin(phs[j]) * freqs[j][1];
+            phs[j] += 2 * Math.PI * freqs[j][0] / sr;
+        }
+        s[i] = Math.tanh(v * 2.2) * env * 0.75;
+    }
+    return mkWav(s, sr);
+}
+
+async function initSounds() {
+    const sr = 22050;
+    const gens = { siren: genSiren(sr), birds: genBirds(sr), horn: genHorn(sr) };
+    for (const [k, blob] of Object.entries(gens)) {
+        const a = new Audio(URL.createObjectURL(blob));
+        a.loop = true;
+        a.volume = 1;
+        alarmAudios[k] = a;
+        // Prime audio element on user gesture so iOS allows later play()
+        try { await a.play(); a.pause(); a.currentTime = 0; } catch(e) {}
+    }
+    // Silent keepalive — prime it on user gesture so later play() works
+    preAlarmAudio = new Audio(URL.createObjectURL(genSilentKeepAlive(sr)));
+    preAlarmAudio.loop = true;
+    try { await preAlarmAudio.play(); preAlarmAudio.pause(); preAlarmAudio.currentTime = 0; } catch(e) {}
+}
+
+function startPreAlarm() {
+    if (!preAlarmAudio) return;
+    preAlarmAudio.currentTime = 0;
+    preAlarmAudio.play().catch(() => {});
+}
+function stopPreAlarm() {
+    if (!preAlarmAudio) return;
+    try { preAlarmAudio.pause(); preAlarmAudio.currentTime = 0; } catch(e) {}
+}
+
+function playAlarm() {
+    const a = alarmAudios[sndType];
+    if (!a) return;
+    a.currentTime = 0;
+    a.play().catch(() => {
+        // Retry once
+        setTimeout(() => a.play().catch(() => {}), 300);
+    });
+}
+
+function stopAlarmAudio() {
+    for (const a of Object.values(alarmAudios)) {
+        try { a.pause(); a.currentTime = 0; } catch(e) {}
+    }
+}
+
+// ── Ping (Web Audio — triggered by user tap, so gesture OK) ──
+async function ensurePingCtx() {
+    if (actx) return;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    actx = new Ctx();
+    if (actx.state === 'suspended') await actx.resume();
+}
+
+function ping(freq = 1300) {
+    if (!actx) return;
     try {
-        const buf = actx.createBuffer(1, actx.sampleRate * 3, actx.sampleRate);
-        const src = actx.createBufferSource();
-        src.buffer = buf; src.loop = true;
-        const g = actx.createGain(); g.gain.value = 0.0001;
-        src.connect(g); g.connect(actx.destination);
-        src.start(0);
-        keepaliveNode = src;
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.connect(g); g.connect(actx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, actx.currentTime);
+        o.frequency.linearRampToValueAtTime(freq * 1.4, actx.currentTime + .08);
+        g.gain.setValueAtTime(.4, actx.currentTime);
+        g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + .35);
+        o.start(); o.stop(actx.currentTime + .35);
     } catch(e) {}
 }
 
-async function wakeAudio() {
-    if (!actx) return;
-    try { await actx.resume(); } catch(e) {}
-    // If still suspended, recreate
-    if (actx.state === 'suspended') {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        actx = new Ctx();
-        startKeepalive();
-    }
-}
-
-// ── stop sound ──
-function killSound() {
-    sndNodes.forEach(n => { try { n.stop(); } catch(e){} });
-    sndNodes = [];
-    if (sndTmr) { clearInterval(sndTmr); sndTmr = null; }
-}
-
-// ── siren ──
-function playSiren() {
-    const comp = actx.createDynamicsCompressor();
-    comp.threshold.value = -3; comp.ratio.value = 20;
-    comp.connect(actx.destination);
-    const mg = actx.createGain(); mg.gain.value = 1.0; mg.connect(comp);
-    const wail = () => {
-        const now = actx.currentTime;
-        for (const d of [0, 5]) {
-            const o = actx.createOscillator(), g = actx.createGain();
-            o.type = 'sawtooth'; g.gain.value = 0.5;
-            o.connect(g); g.connect(mg);
-            o.frequency.setValueAtTime(560 + d, now);
-            o.frequency.linearRampToValueAtTime(1140 + d, now + .85);
-            o.frequency.linearRampToValueAtTime(560 + d, now + 1.7);
-            o.start(now); o.stop(now + 1.7);
-            sndNodes.push(o);
-        }
-    };
-    wail(); sndTmr = setInterval(wail, 1700);
-}
-
-// ── birds ──
-function playBirds() {
-    const flock = () => {
-        const cnt = 3 + Math.floor(Math.random() * 3);
-        for (let b = 0; b < cnt; b++) {
-            const bd = b * 0.28 + Math.random() * 0.12;
-            const bf = 1200 + Math.random() * 2400;
-            const nc = 2 + Math.floor(Math.random() * 4);
-            for (let c = 0; c < nc; c++) {
-                const t = actx.currentTime + bd + c * 0.11;
-                const o = actx.createOscillator(), env = actx.createGain();
-                o.type = 'sine'; o.connect(env); env.connect(actx.destination);
-                o.frequency.setValueAtTime(bf, t);
-                o.frequency.linearRampToValueAtTime(bf * (1.12 + Math.random()*.1), t + .04);
-                o.frequency.linearRampToValueAtTime(bf * .91, t + .09);
-                env.gain.setValueAtTime(0, t);
-                env.gain.linearRampToValueAtTime(.6, t + .025);
-                env.gain.exponentialRampToValueAtTime(.001, t + .09);
-                o.start(t); o.stop(t + .1); sndNodes.push(o);
-            }
-        }
-    };
-    flock(); sndTmr = setInterval(flock, 950);
-}
-
-// ── horn ──
-function playHorn() {
-    const comp = actx.createDynamicsCompressor();
-    comp.threshold.value = -3; comp.ratio.value = 20; comp.connect(actx.destination);
-    const mg = actx.createGain(); mg.gain.value = .85; mg.connect(comp);
-    const dist = actx.createWaveShaper();
-    const cv = new Float32Array(512);
-    for (let i = 0; i < 512; i++) { const x = i*2/512-1; cv[i] = (3+150)*x/(Math.PI+150*Math.abs(x)); }
-    dist.curve = cv; mg.connect(dist); dist.connect(comp);
-    const blast = () => {
-        const now = actx.currentTime;
-        [110,220,330,440].forEach((f,i) => {
-            const o = actx.createOscillator(), g = actx.createGain();
-            o.type='square'; o.frequency.value=f; o.connect(g); g.connect(mg);
-            g.gain.setValueAtTime(0,now);
-            g.gain.linearRampToValueAtTime(.28-i*.04, now+.03);
-            g.gain.setValueAtTime(.28-i*.04, now+.65);
-            g.gain.exponentialRampToValueAtTime(.001, now+.95);
-            o.start(now); o.stop(now+.95); sndNodes.push(o);
-        });
-    };
-    blast(); sndTmr = setInterval(blast, 1100);
-}
-
-function startSound() {
-    killSound();
-    if (!actx) return;
-    if (sndType==='siren') playSiren();
-    else if (sndType==='birds') playBirds();
-    else playHorn();
-}
-
-function ping(freq=1300) {
-    if (!actx) return;
-    const o = actx.createOscillator(), g = actx.createGain();
-    o.connect(g); g.connect(actx.destination);
-    o.type='sine'; o.frequency.setValueAtTime(freq, actx.currentTime);
-    o.frequency.linearRampToValueAtTime(freq*1.4, actx.currentTime+.08);
-    g.gain.setValueAtTime(.4, actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.001, actx.currentTime+.35);
-    o.start(); o.stop(actx.currentTime+.35);
-}
-
-// ── wake lock ──
+// ── Wake Lock ──
 async function grabWakeLock() {
-    try { if ('wakeLock' in navigator) wlock = await navigator.wakeLock.request('screen'); }
-    catch(e){}
+    try { if ('wakeLock' in navigator) wlock = await navigator.wakeLock.request('screen'); } catch(e) {}
 }
-function dropWakeLock() { if (wlock) { wlock.release().catch(()=>{}); wlock=null; } }
+function dropWakeLock() { if (wlock) { wlock.release().catch(() => {}); wlock = null; } }
 
-// ── clock ──
-function pad(n){ return String(n).padStart(2,'0'); }
+// ── Clock ──
+function pad(n) { return String(n).padStart(2, '0'); }
 function tickClock() {
-    const d = new Date();
-    const el = document.getElementById('cur-time');
+    const d = new Date(), el = document.getElementById('cur-time');
     if (el) el.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 setInterval(tickClock, 1000); tickClock();
 
-// ── setup ──
+// ── Sound selector ──
 function pickSnd(type, btn) {
     sndType = type;
     document.querySelectorAll('.snd-btn').forEach(b => b.classList.remove('on'));
     btn.classList.add('on');
 }
+
 async function testSnd() {
-    await ensureAudio();
-    startSound();
-    setTimeout(killSound, 3000);
+    playAlarm();
+    setTimeout(stopAlarmAudio, 3000);
 }
 
+// ── Room objects ──
+function loadRoom() {
+    try {
+        const s = localStorage.getItem(ROOM_KEY);
+        return s ? new Set(JSON.parse(s)) : new Set(POOL.map(p => p.cls));
+    } catch(e) { return new Set(POOL.map(p => p.cls)); }
+}
+
+function goRoom() {
+    roomChecked = loadRoom();
+    const scroll = document.getElementById('room-scroll');
+    scroll.innerHTML = '';
+    for (const item of POOL) {
+        const div = document.createElement('div');
+        div.className = 'room-item' + (roomChecked.has(item.cls) ? ' checked' : '');
+        div.innerHTML = `<span class="room-em">${item.em}</span><span class="room-nm">${item.ru}</span><span class="room-tick">${roomChecked.has(item.cls) ? '✓' : '○'}</span>`;
+        div.onclick = () => {
+            if (roomChecked.has(item.cls)) { roomChecked.delete(item.cls); div.classList.remove('checked'); div.querySelector('.room-tick').textContent = '○'; }
+            else { roomChecked.add(item.cls); div.classList.add('checked'); div.querySelector('.room-tick').textContent = '✓'; }
+        };
+        scroll.appendChild(div);
+    }
+    show('room');
+}
+
+function saveRoom() {
+    if (roomChecked.size < 3) { alert('Отметьте минимум 3 предмета'); return; }
+    try { localStorage.setItem(ROOM_KEY, JSON.stringify([...roomChecked])); } catch(e) {}
+    show('setup');
+}
+
+// ── Alarm ──
 function setAlarm() {
     const inp = document.getElementById('alarm-time');
     if (!inp.value) { alert('Выберите время'); return; }
@@ -463,12 +514,13 @@ function setAlarm() {
     checkTmr = setInterval(checkAlarm, 1000);
     preloadModel();
     grabWakeLock();
+    startPreAlarm(); // Start inaudible audio → keeps iOS JS alive on lock screen
     show('active');
 }
 
 function cancelAlarm() {
     if (checkTmr) { clearInterval(checkTmr); checkTmr = null; }
-    alarmAt = null; dropWakeLock(); show('setup');
+    stopAlarmAudio(); stopPreAlarm(); alarmAt = null; dropWakeLock(); show('setup');
 }
 
 function checkAlarm() {
@@ -478,58 +530,56 @@ function checkAlarm() {
         fireAlarm();
     } else {
         const diff = alarmAt - Date.now();
-        const h = Math.floor(diff/3600000), mn = Math.floor(diff%3600000/60000), s = Math.floor(diff%60000/1000);
+        const h = Math.floor(diff / 3600000), mn = Math.floor(diff % 3600000 / 60000), s = Math.floor(diff % 60000 / 1000);
         const el = document.getElementById('countdown');
         if (el) el.textContent = `${pad(h)}:${pad(mn)}:${pad(s)}`;
     }
 }
 
-async function fireAlarm() {
-    await wakeAudio();
-    startSound();
-    if (navigator.vibrate) navigator.vibrate([600,150,600,150,600,150,600]);
+function fireAlarm() {
+    stopPreAlarm();
+    playAlarm();
+    if (navigator.vibrate) navigator.vibrate([700, 150, 700, 150, 700, 150, 700]);
     grabWakeLock();
     pickTargets();
     document.getElementById('screen-ringing').classList.add('rpulse');
     show('ringing');
 }
 
-// ── dismiss ──
 function dismiss() {
-    killSound(); stopCam(); dropWakeLock();
+    stopAlarmAudio();
+    stopPreAlarm();
+    stopCam();
+    dropWakeLock();
     document.getElementById('screen-ringing').classList.remove('rpulse');
     if (navigator.vibrate) navigator.vibrate(0);
     alarmAt = null;
     show('setup');
 }
 
-// ── targets ──
+// ── Targets ──
 function pickTargets() {
-    const shuffled = [...POOL].sort(() => Math.random() - .5);
+    const room = loadRoom();
+    const avail = POOL.filter(p => room.has(p.cls));
+    const pool = avail.length >= 3 ? avail : POOL;
+    const shuffled = [...pool].sort(() => Math.random() - .5);
     targets = shuffled.slice(0, 3).map(t => ({...t, done: false}));
 }
 
-function reshuffleTargets() {
-    stopCam();
-    pickTargets();
-    renderTargets();
-    // Restart camera
-    setTimeout(startCam, 300);
-}
-
 function renderTargets() {
+    const firstPending = targets.findIndex(t => !t.done);
     targets.forEach((t, i) => {
         const el = document.getElementById('tgt-' + i);
-        el.querySelector('.tgt-em').textContent = t.done ? '✅' : t.em;
-        el.querySelector('.tgt-nm').textContent = t.ru;
+        el.querySelector('.tg-em').textContent = t.done ? '✅' : t.em;
+        el.querySelector('.tg-nm').textContent = t.ru;
         el.classList.toggle('done', t.done);
-        // Highlight first not-done target
-        const firstPending = targets.findIndex(x => !x.done);
-        el.classList.toggle('active-target', !t.done && i === firstPending);
+        el.classList.toggle('cur', !t.done && i === firstPending);
     });
 }
 
-// ── scan ──
+function reshuffleTgts() { stopCam(); pickTargets(); renderTargets(); setTimeout(startCam, 200); }
+
+// ── Scan ──
 async function goScan() {
     renderTargets();
     document.getElementById('scan-hint').textContent = 'Загрузка камеры...';
@@ -544,21 +594,20 @@ async function startCam() {
             audio: false
         });
         const vid = document.getElementById('cam-video');
-        vid.srcObject = camStream; await vid.play();
+        vid.srcObject = camStream;
+        await vid.play();
 
         if (!tfModel) {
-            document.getElementById('scan-hint').textContent = 'Загрузка AI (~8 МБ, подождите)...';
+            document.getElementById('scan-hint').textContent = 'Загрузка AI (~8 МБ)...';
             await preloadModel();
         }
+
         if (!tfModel) {
-            document.getElementById('scan-hint').textContent = '❌ AI не загрузился. Попробуйте "Другие предметы" или используйте Математику.';
+            document.getElementById('scan-hint').textContent = '❌ AI не загрузился. Используй Математику или нажми "Другие предметы".';
             return;
         }
 
-        const firstPending = targets.find(t => !t.done);
-        document.getElementById('scan-hint').textContent = firstPending
-            ? `Ищем: ${firstPending.em} ${firstPending.ru}`
-            : '🎉 Все найдены!';
+        updateHint();
 
         const off = document.createElement('canvas');
         off.width = 320; off.height = 240;
@@ -577,24 +626,27 @@ async function startCam() {
                         tgt.done = true;
                         ping(1400);
                         renderTargets();
-                        const remaining = targets.filter(t => !t.done);
-                        if (remaining.length === 0) {
+                        if (targets.every(t => t.done)) {
                             clearInterval(detectTmr); detectTmr = null;
-                            document.getElementById('scan-hint').textContent = '🎉 Все найдены! Будильник выключен!';
-                            setTimeout(dismiss, 1500);
+                            document.getElementById('scan-hint').textContent = '🎉 Все найдены! Выключаем...';
+                            setTimeout(dismiss, 1400);
                         } else {
-                            document.getElementById('scan-hint').textContent =
-                                `✅ ${tgt.ru}! Ищем: ${remaining[0].em} ${remaining[0].ru}`;
+                            updateHint();
                         }
                         break;
                     }
                 }
-            } catch(e){}
+            } catch(e) {}
         }, 600);
 
     } catch(e) {
         document.getElementById('scan-hint').textContent = '❌ Нет доступа к камере';
     }
+}
+
+function updateHint() {
+    const next = targets.find(t => !t.done);
+    if (next) document.getElementById('scan-hint').textContent = `Ищем: ${next.em} ${next.ru}`;
 }
 
 function stopCam() {
@@ -620,94 +672,80 @@ async function preloadModel() {
     try {
         await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
         await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
-        // Use lite model — faster and lighter on iPhone
         tfModel = await window.cocoSsd.load({ base: 'lite_mobilenet_v2' });
-        console.log('✅ TF model loaded');
-    } catch(e) {
-        console.warn('TF model failed:', e);
-    }
+    } catch(e) { console.warn('TF fail:', e); }
     tfLoading = false;
 }
 
-// ── math ──
-function genProb(level) {
-    if (level === 0) { // easy: addition
-        const a = 15 + Math.floor(Math.random()*45), b = 10 + Math.floor(Math.random()*35);
-        return { txt: `${a} + ${b}`, ans: a+b };
-    } else if (level === 1) { // medium: subtraction
-        const a = 40 + Math.floor(Math.random()*55), b = 10 + Math.floor(Math.random()*30);
-        return { txt: `${a} − ${b}`, ans: a-b };
-    } else { // hard: multiplication
-        const a = 3 + Math.floor(Math.random()*9), b = 3 + Math.floor(Math.random()*11);
-        return { txt: `${a} × ${b}`, ans: a*b };
-    }
+// ── Math ──
+function genProb(lvl) {
+    if (lvl === 0) { const a = 15 + Math.floor(Math.random()*45), b = 10 + Math.floor(Math.random()*35); return {txt:`${a} + ${b}`, ans:a+b}; }
+    if (lvl === 1) { const a = 40 + Math.floor(Math.random()*55), b = 10 + Math.floor(Math.random()*30); return {txt:`${a} − ${b}`, ans:a-b}; }
+    const a = 3 + Math.floor(Math.random()*9), b = 3 + Math.floor(Math.random()*11); return {txt:`${a} × ${b}`, ans:a*b};
 }
 
 function goMath() {
     mathProbs = [genProb(0), genProb(1), genProb(2)];
     mathIdx = 0; mathInput = '';
-    renderMath();
-    show('math');
+    renderMath(); show('math');
 }
 
 function renderMath() {
-    const p = mathProbs[mathIdx];
-    document.getElementById('math-prog').textContent = `Пример ${mathIdx+1} / 3`;
-    document.getElementById('math-problem').textContent = `${p.txt} = ?`;
-    document.getElementById('math-answer').textContent = mathInput || '—';
+    document.getElementById('math-prog').textContent = `Пример ${mathIdx + 1} / 3`;
+    document.getElementById('math-prob').textContent = mathProbs[mathIdx].txt + ' = ?';
+    document.getElementById('math-ans').textContent = mathInput || '—';
 }
 
-function npKey(v) {
-    const el = document.getElementById('math-answer');
+function np(v) {
+    const el = document.getElementById('math-ans');
     if (v === '←') {
         mathInput = mathInput.slice(0, -1);
         el.textContent = mathInput || '—';
     } else if (v === '✓') {
-        const p = mathProbs[mathIdx];
-        if (mathInput === '') return;
-        if (parseInt(mathInput) === p.ans) {
+        if (!mathInput) return;
+        if (parseInt(mathInput) === mathProbs[mathIdx].ans) {
             ping(1600);
             mathIdx++;
             mathInput = '';
             if (mathIdx >= 3) {
-                document.getElementById('math-prog').textContent = '🎉 Всё правильно! Молодец!';
-                document.getElementById('math-problem').textContent = '';
-                document.getElementById('math-answer').textContent = '✅';
+                document.getElementById('math-prog').textContent = '🎉 Всё правильно!';
+                document.getElementById('math-prob').textContent = '';
+                el.textContent = '✅';
                 setTimeout(dismiss, 1300);
-            } else {
-                renderMath();
-            }
+            } else { renderMath(); }
         } else {
+            ping(300);
             el.classList.remove('wrong');
-            void el.offsetWidth; // reflow for animation restart
+            void el.offsetWidth;
             el.classList.add('wrong');
-            ping(400);
-            setTimeout(() => {
-                el.classList.remove('wrong');
-                mathInput = '';
-                el.textContent = '—';
-            }, 500);
+            setTimeout(() => { el.classList.remove('wrong'); mathInput = ''; el.textContent = '—'; }, 500);
         }
     } else {
-        if (mathInput.length < 5) {
-            mathInput += v;
-            el.textContent = mathInput;
-        }
+        if (mathInput.length < 5) { mathInput += v; el.textContent = mathInput; }
     }
 }
 
-// ── init ──
+// ── Init ──
 async function initApp() {
-    await ensureAudio();
-    const def = new Date(Date.now() + 8*3600000);
+    await initSounds();          // Generate WAV blobs + prime audio elements
+    await ensurePingCtx();       // Init Web Audio for ping sounds
+    const def = new Date(Date.now() + 8 * 3600000);
     document.getElementById('alarm-time').value = `${pad(def.getHours())}:${pad(def.getMinutes())}`;
     show('setup');
 }
 
-// Service Worker
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
+
+// Restore pre-alarm audio if user returns to app mid-wait
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && alarmAt && new Date() < alarmAt) {
+        if (preAlarmAudio && preAlarmAudio.paused) {
+            preAlarmAudio.play().catch(() => {});
+        }
+    }
+});
 </script>
 </body>
 </html>
