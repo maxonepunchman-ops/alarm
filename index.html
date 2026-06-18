@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="WakeForce">
+    <link rel="manifest" href="manifest.json">
+    <title>WakeForce</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+    --bg:#08080f;--s1:#11111e;--s2:#18182a;
+    --or:#ff6b35;--red:#ff2d5e;--blue:#4da6ff;
+    --grn:#00e676;--txt:#e8e8ff;--dim:#5a5a80;--brd:#252540;
+}
+html,body{height:100%;overflow:hidden}
+body{
+    background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    -webkit-user-select:none;user-select:none;
+}
+#app{width:100%;max-width:430px;height:100%;height:-webkit-fill-available;position:relative;overflow:hidden}
+
+.screen{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:28px 22px;gap:18px;
+    opacity:0;pointer-events:none;transition:opacity 0.25s;
+}
+.screen.active{opacity:1;pointer-events:all}
+
+/* --- Buttons --- */
+.btn{
+    width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:16px 20px;border-radius:16px;border:none;
+    font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;
+    transition:transform .1s,opacity .1s;letter-spacing:.2px;
+}
+.btn:active{transform:scale(.96);opacity:.8}
+.btn-pri{background:linear-gradient(135deg,var(--or),var(--red));color:#fff}
+.btn-sec{background:var(--s2);color:var(--txt);border:1px solid var(--brd)}
+.btn-danger{background:linear-gradient(135deg,#cc0030,#ff0040);color:#fff;font-size:17px;padding:18px;border-radius:18px}
+.btn-math{background:linear-gradient(135deg,#2255cc,#4488ff);color:#fff;font-size:17px;padding:18px;border-radius:18px}
+.btn-sm{padding:11px;font-size:13px}
+.btn-grn{background:var(--grn);color:#000;font-size:18px;padding:18px;border-radius:18px}
+
+.lbl{width:100%;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);margin-bottom:-8px}
+.warn{width:100%;background:rgba(255,180,0,.08);border:1px solid rgba(255,180,0,.25);border-radius:12px;padding:10px 14px;font-size:12px;color:#ffcc44;text-align:center;line-height:1.5}
+
+/* ===== WELCOME ===== */
+#screen-welcome{text-align:center;gap:20px}
+.wlc-em{font-size:86px;line-height:1}
+.wlc-ttl{font-size:40px;font-weight:800;background:linear-gradient(135deg,var(--or),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.wlc-sub{color:var(--dim);font-size:14px;line-height:1.6;max-width:280px}
+
+/* ===== SETUP ===== */
+#screen-setup{justify-content:flex-start;padding-top:52px}
+.cur-time{font-size:50px;font-weight:200;letter-spacing:2px;font-variant-numeric:tabular-nums;text-align:center;width:100%}
+.time-wrap{width:100%;background:var(--s1);border:1px solid var(--brd);border-radius:16px;overflow:hidden}
+#alarm-time{width:100%;background:transparent;border:none;color:var(--txt);font-size:44px;font-weight:300;text-align:center;padding:10px 16px;font-family:inherit;font-variant-numeric:tabular-nums;letter-spacing:2px;-webkit-appearance:none}
+#alarm-time:focus{outline:none}
+.snd-grid{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.snd-btn{background:var(--s1);border:2px solid var(--brd);border-radius:16px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:inherit;color:var(--txt);transition:all .2s}
+.snd-btn:active{transform:scale(.94)}
+.snd-btn.on{border-color:var(--or);background:rgba(255,107,53,.12)}
+.snd-btn .ic{font-size:28px}
+.snd-btn .nm{font-size:12px;font-weight:600;color:var(--dim)}
+.snd-btn.on .nm{color:var(--or)}
+
+/* ===== ACTIVE ===== */
+#screen-active{text-align:center;gap:20px}
+.act-check{font-size:58px}
+.act-time{font-size:72px;font-weight:200;font-variant-numeric:tabular-nums;letter-spacing:2px}
+.cd-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.cd-lbl{font-size:11px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.countdown{font-size:30px;font-weight:300;font-variant-numeric:tabular-nums;color:var(--blue);letter-spacing:2px}
+.snd-badge{background:var(--s1);border:1px solid var(--brd);border-radius:20px;padding:6px 18px;font-size:14px;color:var(--dim)}
+
+/* ===== RINGING ===== */
+#screen-ringing{text-align:center;gap:22px}
+#screen-ringing.rpulse{animation:bgp .9s ease-in-out infinite}
+@keyframes bgp{0%,100%{background:#0f0008}50%{background:#200014}}
+.ring-bell{font-size:100px;display:block;animation:bellshake .45s ease-in-out infinite}
+@keyframes bellshake{0%,100%{transform:rotate(-10deg) scale(1)}50%{transform:rotate(10deg) scale(1.06)}}
+.ring-ttl{font-size:44px;font-weight:900;background:linear-gradient(135deg,#ff4400,#ff005e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px}
+.ring-sub{color:var(--dim);font-size:14px;line-height:1.5;max-width:260px}
+
+/* ===== SCAN ===== */
+#screen-scan{justify-content:flex-start;padding-top:44px;gap:12px}
+.scan-hdr{font-size:18px;font-weight:700;text-align:center}
+
+.targets-row{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tgt{
+    background:var(--s1);border:2px solid var(--brd);border-radius:14px;
+    padding:10px 6px;text-align:center;display:flex;flex-direction:column;
+    align-items:center;gap:4px;transition:all .3s;
+}
+.tgt.done{border-color:var(--grn);background:rgba(0,230,118,.1)}
+.tgt .tgt-em{font-size:28px}
+.tgt .tgt-nm{font-size:11px;font-weight:700;color:var(--dim);line-height:1.2}
+.tgt.done .tgt-nm{color:var(--grn)}
+.tgt.active-target{border-color:var(--or);background:rgba(255,107,53,.1);animation:targetPulse 1s ease-in-out infinite}
+@keyframes targetPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,53,.4)}50%{box-shadow:0 0 0 6px rgba(255,107,53,0)}}
+
+.cam-wrap{width:100%;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:4/3;position:relative;border:1px solid var(--brd)}
+#cam-video{width:100%;height:100%;object-fit:cover}
+.cam-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-frame{width:120px;height:120px;border:2.5px solid var(--or);border-radius:16px;animation:framep 1s ease-in-out infinite}
+@keyframes framep{0%,100%{opacity:.35;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}}
+
+.scan-hint{font-size:13px;color:var(--dim);text-align:center;min-height:18px}
+.shuffle-btn{background:none;border:1px solid var(--brd);border-radius:10px;color:var(--dim);padding:7px 16px;font-size:12px;font-family:inherit;cursor:pointer}
+.shuffle-btn:active{opacity:.6}
+
+/* ===== MATH ===== */
+#screen-math{justify-content:flex-start;padding-top:50px;gap:16px}
+.math-prog{font-size:13px;color:var(--dim);text-align:center;font-weight:600;letter-spacing:.5px}
+.math-problem{font-size:46px;font-weight:300;text-align:center;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.math-answer{
+    font-size:52px;font-weight:200;font-variant-numeric:tabular-nums;letter-spacing:2px;
+    min-height:70px;text-align:center;color:var(--or);
+    border-bottom:2px solid var(--brd);width:100%;padding-bottom:4px;
+}
+.math-answer.wrong{animation:wrongshake .4s ease}
+@keyframes wrongshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+
+.numpad{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.np-btn{
+    background:var(--s2);border:1px solid var(--brd);border-radius:16px;
+    padding:18px 0;font-size:24px;font-weight:500;color:var(--txt);
+    cursor:pointer;font-family:inherit;transition:transform .1s,background .1s;
+}
+.np-btn:active{transform:scale(.93);background:var(--s1)}
+.np-del{color:var(--dim);font-size:20px}
+.np-ok{background:var(--grn);color:#000;border-color:var(--grn)}
+.np-ok:active{background:#00c060}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- WELCOME -->
+<div class="screen active" id="screen-welcome">
+    <div class="wlc-em">⏰</div>
+    <div class="wlc-ttl">WakeForce</div>
+    <div class="wlc-sub">Будильник, который не обмануть — сканирование предметов или математика</div>
+    <button class="btn btn-pri" style="font-size:18px;padding:20px;border-radius:20px" onclick="initApp()">Начать</button>
+    <div class="warn">⚠️ Уберите с беззвучного режима и держите экран включённым</div>
+</div>
+
+<!-- SETUP -->
+<div class="screen" id="screen-setup">
+    <div class="cur-time" id="cur-time">00:00:00</div>
+    <div class="lbl">Время будильника</div>
+    <div class="time-wrap"><input type="time" id="alarm-time"></div>
+    <div class="lbl">Звук сирены</div>
+    <div class="snd-grid">
+        <button class="snd-btn on" onclick="pickSnd('siren',this)"><span class="ic">🚨</span><span class="nm">Сирена</span></button>
+        <button class="snd-btn" onclick="pickSnd('birds',this)"><span class="ic">🐦</span><span class="nm">Птицы</span></button>
+        <button class="snd-btn" onclick="pickSnd('horn',this)"><span class="ic">📯</span><span class="nm">Горн</span></button>
+    </div>
+    <button class="btn btn-pri" onclick="setAlarm()">Установить будильник</button>
+    <button class="btn btn-sec btn-sm" onclick="testSnd()">▶ Проверить звук (3 сек)</button>
+</div>
+
+<!-- ACTIVE -->
+<div class="screen" id="screen-active">
+    <div class="act-check">✅</div>
+    <div>
+        <div style="color:var(--dim);font-size:13px;text-align:center;margin-bottom:4px">Будильник на</div>
+        <div class="act-time" id="act-time">00:00</div>
+    </div>
+    <div class="cd-wrap">
+        <div class="cd-lbl">Осталось</div>
+        <div class="countdown" id="countdown">00:00:00</div>
+    </div>
+    <div class="snd-badge" id="snd-badge">🚨 Сирена</div>
+    <div class="warn">⚠️ Не блокируйте экран — приложение должно быть открыто</div>
+    <button class="btn btn-sec btn-sm" onclick="cancelAlarm()">✕ Отменить будильник</button>
+</div>
+
+<!-- RINGING -->
+<div class="screen" id="screen-ringing">
+    <span class="ring-bell">⏰</span>
+    <div class="ring-ttl">ПОДЪЁМ!</div>
+    <div class="ring-sub">Выберите способ выключить будильник:</div>
+    <button class="btn btn-danger" onclick="goScan()">📷 Сканировать 3 предмета</button>
+    <button class="btn btn-math" onclick="goMath()">🧮 Решить 3 примера</button>
+</div>
+
+<!-- SCAN -->
+<div class="screen" id="screen-scan">
+    <div class="scan-hdr">Найди и покажи камерой:</div>
+    <div class="targets-row" id="targets-row">
+        <div class="tgt" id="tgt-0"><div class="tgt-em">?</div><div class="tgt-nm">—</div></div>
+        <div class="tgt" id="tgt-1"><div class="tgt-em">?</div><div class="tgt-nm">—</div></div>
+        <div class="tgt" id="tgt-2"><div class="tgt-em">?</div><div class="tgt-nm">—</div></div>
+    </div>
+    <div class="cam-wrap">
+        <video id="cam-video" playsinline autoplay muted></video>
+        <div class="cam-overlay"><div class="scan-frame"></div></div>
+    </div>
+    <div class="scan-hint" id="scan-hint">Загрузка камеры...</div>
+    <div style="display:flex;gap:10px;width:100%">
+        <button class="shuffle-btn" onclick="reshuffleTargets()">🔀 Другие предметы</button>
+        <button class="shuffle-btn" style="margin-left:auto" onclick="backToRing()">← Назад</button>
+    </div>
+</div>
+
+<!-- MATH -->
+<div class="screen" id="screen-math">
+    <div class="math-prog" id="math-prog">Пример 1 / 3</div>
+    <div class="math-problem" id="math-problem">— + — = ?</div>
+    <div class="math-answer" id="math-answer">—</div>
+    <div class="numpad">
+        <button class="np-btn" onclick="npKey('1')">1</button>
+        <button class="np-btn" onclick="npKey('2')">2</button>
+        <button class="np-btn" onclick="npKey('3')">3</button>
+        <button class="np-btn" onclick="npKey('4')">4</button>
+        <button class="np-btn" onclick="npKey('5')">5</button>
+        <button class="np-btn" onclick="npKey('6')">6</button>
+        <button class="np-btn" onclick="npKey('7')">7</button>
+        <button class="np-btn" onclick="npKey('8')">8</button>
+        <button class="np-btn" onclick="npKey('9')">9</button>
+        <button class="np-btn np-del" onclick="npKey('←')">⌫</button>
+        <button class="np-btn" onclick="npKey('0')">0</button>
+        <button class="np-btn np-ok" onclick="npKey('✓')">✓</button>
+    </div>
+    <button class="btn btn-sec btn-sm" onclick="backToRing()">← Назад</button>
+</div>
+
+</div><!-- #app -->
+<script>
+// ================================================================
+//  WakeForce v2
+// ================================================================
+
+const SNAMES = { siren:'🚨 Сирена', birds:'🐦 Птицы', horn:'📯 Горн' };
+
+// Pool of objects COCO-SSD reliably detects (common household items)
+const POOL = [
+    {cls:'chair',     ru:'Стул',       em:'🪑'},
+    {cls:'couch',     ru:'Диван',       em:'🛋️'},
+    {cls:'bed',       ru:'Кровать',     em:'🛏️'},
+    {cls:'dining table', ru:'Стол',    em:'🪵'},
+    {cls:'laptop',    ru:'Ноутбук',    em:'💻'},
+    {cls:'cell phone',ru:'Телефон',    em:'📱'},
+    {cls:'book',      ru:'Книга',      em:'📚'},
+    {cls:'bottle',    ru:'Бутылка',    em:'🍶'},
+    {cls:'cup',       ru:'Кружка',     em:'☕'},
+    {cls:'remote',    ru:'Пульт',      em:'📡'},
+    {cls:'keyboard',  ru:'Клавиатура', em:'⌨️'},
+    {cls:'tvmonitor', ru:'Телевизор',  em:'📺'},
+    {cls:'clock',     ru:'Часы',       em:'🕐'},
+    {cls:'potted plant',ru:'Растение', em:'🌿'},
+    {cls:'backpack',  ru:'Рюкзак',     em:'🎒'},
+    {cls:'mouse',     ru:'Мышь (ком.)',em:'🖱️'},
+    {cls:'vase',      ru:'Ваза',       em:'🏺'},
+    {cls:'umbrella',  ru:'Зонт',       em:'☂️'},
+    {cls:'scissors',  ru:'Ножницы',    em:'✂️'},
+    {cls:'bowl',      ru:'Миска',      em:'🥣'},
+];
+
+// ── state ──
+let actx = null, keepaliveNode = null;
+let sndType = 'siren';
+let alarmAt = null;
+let checkTmr = null;
+let sndNodes = [], sndTmr = null;
+let targets = [];          // [{cls,ru,em,done}]
+let tfModel = null, tfLoading = false;
+let camStream = null, detectTmr = null;
+let wlock = null;
+let mathProbs = [], mathIdx = 0, mathInput = '';
+
+// ── screens ──
+function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+}
+
+// ── audio ──
+async function ensureAudio() {
+    if (actx) {
+        if (actx.state === 'suspended') await actx.resume();
+        return;
+    }
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    actx = new Ctx();
+    if (actx.state === 'suspended') await actx.resume();
+    // Unlock with silent buffer
+    const buf = actx.createBuffer(1, 1, 22050);
+    const src = actx.createBufferSource();
+    src.buffer = buf; src.connect(actx.destination); src.start(0);
+    startKeepalive();
+}
+
+// Keep audio context alive on iOS (prevents suspension)
+function startKeepalive() {
+    if (keepaliveNode) return;
+    try {
+        const buf = actx.createBuffer(1, actx.sampleRate * 3, actx.sampleRate);
+        const src = actx.createBufferSource();
+        src.buffer = buf; src.loop = true;
+        const g = actx.createGain(); g.gain.value = 0.0001;
+        src.connect(g); g.connect(actx.destination);
+        src.start(0);
+        keepaliveNode = src;
+    } catch(e) {}
+}
+
+async function wakeAudio() {
+    if (!actx) return;
+    try { await actx.resume(); } catch(e) {}
+    // If still suspended, recreate
+    if (actx.state === 'suspended') {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        actx = new Ctx();
+        startKeepalive();
+    }
+}
+
+// ── stop sound ──
+function killSound() {
+    sndNodes.forEach(n => { try { n.stop(); } catch(e){} });
+    sndNodes = [];
+    if (sndTmr) { clearInterval(sndTmr); sndTmr = null; }
+}
+
+// ── siren ──
+function playSiren() {
+    const comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -3; comp.ratio.value = 20;
+    comp.connect(actx.destination);
+    const mg = actx.createGain(); mg.gain.value = 1.0; mg.connect(comp);
+    const wail = () => {
+        const now = actx.currentTime;
+        for (const d of [0, 5]) {
+            const o = actx.createOscillator(), g = actx.createGain();
+            o.type = 'sawtooth'; g.gain.value = 0.5;
+            o.connect(g); g.connect(mg);
+            o.frequency.setValueAtTime(560 + d, now);
+            o.frequency.linearRampToValueAtTime(1140 + d, now + .85);
+            o.frequency.linearRampToValueAtTime(560 + d, now + 1.7);
+            o.start(now); o.stop(now + 1.7);
+            sndNodes.push(o);
+        }
+    };
+    wail(); sndTmr = setInterval(wail, 1700);
+}
+
+// ── birds ──
+function playBirds() {
+    const flock = () => {
+        const cnt = 3 + Math.floor(Math.random() * 3);
+        for (let b = 0; b < cnt; b++) {
+            const bd = b * 0.28 + Math.random() * 0.12;
+            const bf = 1200 + Math.random() * 2400;
+            const nc = 2 + Math.floor(Math.random() * 4);
+            for (let c = 0; c < nc; c++) {
+                const t = actx.currentTime + bd + c * 0.11;
+                const o = actx.createOscillator(), env = actx.createGain();
+                o.type = 'sine'; o.connect(env); env.connect(actx.destination);
+                o.frequency.setValueAtTime(bf, t);
+                o.frequency.linearRampToValueAtTime(bf * (1.12 + Math.random()*.1), t + .04);
+                o.frequency.linearRampToValueAtTime(bf * .91, t + .09);
+                env.gain.setValueAtTime(0, t);
+                env.gain.linearRampToValueAtTime(.6, t + .025);
+                env.gain.exponentialRampToValueAtTime(.001, t + .09);
+                o.start(t); o.stop(t + .1); sndNodes.push(o);
+            }
+        }
+    };
+    flock(); sndTmr = setInterval(flock, 950);
+}
+
+// ── horn ──
+function playHorn() {
+    const comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -3; comp.ratio.value = 20; comp.connect(actx.destination);
+    const mg = actx.createGain(); mg.gain.value = .85; mg.connect(comp);
+    const dist = actx.createWaveShaper();
+    const cv = new Float32Array(512);
+    for (let i = 0; i < 512; i++) { const x = i*2/512-1; cv[i] = (3+150)*x/(Math.PI+150*Math.abs(x)); }
+    dist.curve = cv; mg.connect(dist); dist.connect(comp);
+    const blast = () => {
+        const now = actx.currentTime;
+        [110,220,330,440].forEach((f,i) => {
+            const o = actx.createOscillator(), g = actx.createGain();
+            o.type='square'; o.frequency.value=f; o.connect(g); g.connect(mg);
+            g.gain.setValueAtTime(0,now);
+            g.gain.linearRampToValueAtTime(.28-i*.04, now+.03);
+            g.gain.setValueAtTime(.28-i*.04, now+.65);
+            g.gain.exponentialRampToValueAtTime(.001, now+.95);
+            o.start(now); o.stop(now+.95); sndNodes.push(o);
+        });
+    };
+    blast(); sndTmr = setInterval(blast, 1100);
+}
+
+function startSound() {
+    killSound();
+    if (!actx) return;
+    if (sndType==='siren') playSiren();
+    else if (sndType==='birds') playBirds();
+    else playHorn();
+}
+
+function ping(freq=1300) {
+    if (!actx) return;
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.connect(g); g.connect(actx.destination);
+    o.type='sine'; o.frequency.setValueAtTime(freq, actx.currentTime);
+    o.frequency.linearRampToValueAtTime(freq*1.4, actx.currentTime+.08);
+    g.gain.setValueAtTime(.4, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, actx.currentTime+.35);
+    o.start(); o.stop(actx.currentTime+.35);
+}
+
+// ── wake lock ──
+async function grabWakeLock() {
+    try { if ('wakeLock' in navigator) wlock = await navigator.wakeLock.request('screen'); }
+    catch(e){}
+}
+function dropWakeLock() { if (wlock) { wlock.release().catch(()=>{}); wlock=null; } }
+
+// ── clock ──
+function pad(n){ return String(n).padStart(2,'0'); }
+function tickClock() {
+    const d = new Date();
+    const el = document.getElementById('cur-time');
+    if (el) el.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+setInterval(tickClock, 1000); tickClock();
+
+// ── setup ──
+function pickSnd(type, btn) {
+    sndType = type;
+    document.querySelectorAll('.snd-btn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+}
+async function testSnd() {
+    await ensureAudio();
+    startSound();
+    setTimeout(killSound, 3000);
+}
+
+function setAlarm() {
+    const inp = document.getElementById('alarm-time');
+    if (!inp.value) { alert('Выберите время'); return; }
+    const [h, m] = inp.value.split(':').map(Number);
+    const t = new Date(); t.setHours(h, m, 0, 0);
+    if (t <= new Date()) t.setDate(t.getDate() + 1);
+    alarmAt = t;
+    document.getElementById('act-time').textContent = `${pad(h)}:${pad(m)}`;
+    document.getElementById('snd-badge').textContent = SNAMES[sndType];
+    if (checkTmr) clearInterval(checkTmr);
+    checkTmr = setInterval(checkAlarm, 1000);
+    preloadModel();
+    grabWakeLock();
+    show('active');
+}
+
+function cancelAlarm() {
+    if (checkTmr) { clearInterval(checkTmr); checkTmr = null; }
+    alarmAt = null; dropWakeLock(); show('setup');
+}
+
+function checkAlarm() {
+    if (!alarmAt) return;
+    if (new Date() >= alarmAt) {
+        clearInterval(checkTmr); checkTmr = null;
+        fireAlarm();
+    } else {
+        const diff = alarmAt - Date.now();
+        const h = Math.floor(diff/3600000), mn = Math.floor(diff%3600000/60000), s = Math.floor(diff%60000/1000);
+        const el = document.getElementById('countdown');
+        if (el) el.textContent = `${pad(h)}:${pad(mn)}:${pad(s)}`;
+    }
+}
+
+async function fireAlarm() {
+    await wakeAudio();
+    startSound();
+    if (navigator.vibrate) navigator.vibrate([600,150,600,150,600,150,600]);
+    grabWakeLock();
+    pickTargets();
+    document.getElementById('screen-ringing').classList.add('rpulse');
+    show('ringing');
+}
+
+// ── dismiss ──
+function dismiss() {
+    killSound(); stopCam(); dropWakeLock();
+    document.getElementById('screen-ringing').classList.remove('rpulse');
+    if (navigator.vibrate) navigator.vibrate(0);
+    alarmAt = null;
+    show('setup');
+}
+
+// ── targets ──
+function pickTargets() {
+    const shuffled = [...POOL].sort(() => Math.random() - .5);
+    targets = shuffled.slice(0, 3).map(t => ({...t, done: false}));
+}
+
+function reshuffleTargets() {
+    stopCam();
+    pickTargets();
+    renderTargets();
+    // Restart camera
+    setTimeout(startCam, 300);
+}
+
+function renderTargets() {
+    targets.forEach((t, i) => {
+        const el = document.getElementById('tgt-' + i);
+        el.querySelector('.tgt-em').textContent = t.done ? '✅' : t.em;
+        el.querySelector('.tgt-nm').textContent = t.ru;
+        el.classList.toggle('done', t.done);
+        // Highlight first not-done target
+        const firstPending = targets.findIndex(x => !x.done);
+        el.classList.toggle('active-target', !t.done && i === firstPending);
+    });
+}
+
+// ── scan ──
+async function goScan() {
+    renderTargets();
+    document.getElementById('scan-hint').textContent = 'Загрузка камеры...';
+    show('scan');
+    await startCam();
+}
+
+async function startCam() {
+    try {
+        camStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: {ideal:'environment'}, width:{ideal:640}, height:{ideal:480} },
+            audio: false
+        });
+        const vid = document.getElementById('cam-video');
+        vid.srcObject = camStream; await vid.play();
+
+        if (!tfModel) {
+            document.getElementById('scan-hint').textContent = 'Загрузка AI (~8 МБ, подождите)...';
+            await preloadModel();
+        }
+        if (!tfModel) {
+            document.getElementById('scan-hint').textContent = '❌ AI не загрузился. Попробуйте "Другие предметы" или используйте Математику.';
+            return;
+        }
+
+        const firstPending = targets.find(t => !t.done);
+        document.getElementById('scan-hint').textContent = firstPending
+            ? `Ищем: ${firstPending.em} ${firstPending.ru}`
+            : '🎉 Все найдены!';
+
+        const off = document.createElement('canvas');
+        off.width = 320; off.height = 240;
+        const oc = off.getContext('2d');
+
+        detectTmr = setInterval(async () => {
+            const vid = document.getElementById('cam-video');
+            if (!vid || vid.readyState < 2 || !tfModel) return;
+            try {
+                oc.drawImage(vid, 0, 0, 320, 240);
+                const preds = await tfModel.detect(off);
+                for (const p of preds) {
+                    if (p.score < 0.5) continue;
+                    const tgt = targets.find(t => !t.done && t.cls === p.class);
+                    if (tgt) {
+                        tgt.done = true;
+                        ping(1400);
+                        renderTargets();
+                        const remaining = targets.filter(t => !t.done);
+                        if (remaining.length === 0) {
+                            clearInterval(detectTmr); detectTmr = null;
+                            document.getElementById('scan-hint').textContent = '🎉 Все найдены! Будильник выключен!';
+                            setTimeout(dismiss, 1500);
+                        } else {
+                            document.getElementById('scan-hint').textContent =
+                                `✅ ${tgt.ru}! Ищем: ${remaining[0].em} ${remaining[0].ru}`;
+                        }
+                        break;
+                    }
+                }
+            } catch(e){}
+        }, 600);
+
+    } catch(e) {
+        document.getElementById('scan-hint').textContent = '❌ Нет доступа к камере';
+    }
+}
+
+function stopCam() {
+    if (detectTmr) { clearInterval(detectTmr); detectTmr = null; }
+    if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+}
+
+function backToRing() { stopCam(); show('ringing'); }
+
+// ── TF.js ──
+function loadScript(src) {
+    return new Promise((ok, fail) => {
+        if (document.querySelector(`script[src="${src}"]`)) { ok(); return; }
+        const s = document.createElement('script');
+        s.src = src; s.onload = ok; s.onerror = fail;
+        document.head.appendChild(s);
+    });
+}
+
+async function preloadModel() {
+    if (tfModel || tfLoading) return;
+    tfLoading = true;
+    try {
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+        // Use lite model — faster and lighter on iPhone
+        tfModel = await window.cocoSsd.load({ base: 'lite_mobilenet_v2' });
+        console.log('✅ TF model loaded');
+    } catch(e) {
+        console.warn('TF model failed:', e);
+    }
+    tfLoading = false;
+}
+
+// ── math ──
+function genProb(level) {
+    if (level === 0) { // easy: addition
+        const a = 15 + Math.floor(Math.random()*45), b = 10 + Math.floor(Math.random()*35);
+        return { txt: `${a} + ${b}`, ans: a+b };
+    } else if (level === 1) { // medium: subtraction
+        const a = 40 + Math.floor(Math.random()*55), b = 10 + Math.floor(Math.random()*30);
+        return { txt: `${a} − ${b}`, ans: a-b };
+    } else { // hard: multiplication
+        const a = 3 + Math.floor(Math.random()*9), b = 3 + Math.floor(Math.random()*11);
+        return { txt: `${a} × ${b}`, ans: a*b };
+    }
+}
+
+function goMath() {
+    mathProbs = [genProb(0), genProb(1), genProb(2)];
+    mathIdx = 0; mathInput = '';
+    renderMath();
+    show('math');
+}
+
+function renderMath() {
+    const p = mathProbs[mathIdx];
+    document.getElementById('math-prog').textContent = `Пример ${mathIdx+1} / 3`;
+    document.getElementById('math-problem').textContent = `${p.txt} = ?`;
+    document.getElementById('math-answer').textContent = mathInput || '—';
+}
+
+function npKey(v) {
+    const el = document.getElementById('math-answer');
+    if (v === '←') {
+        mathInput = mathInput.slice(0, -1);
+        el.textContent = mathInput || '—';
+    } else if (v === '✓') {
+        const p = mathProbs[mathIdx];
+        if (mathInput === '') return;
+        if (parseInt(mathInput) === p.ans) {
+            ping(1600);
+            mathIdx++;
+            mathInput = '';
+            if (mathIdx >= 3) {
+                document.getElementById('math-prog').textContent = '🎉 Всё правильно! Молодец!';
+                document.getElementById('math-problem').textContent = '';
+                document.getElementById('math-answer').textContent = '✅';
+                setTimeout(dismiss, 1300);
+            } else {
+                renderMath();
+            }
+        } else {
+            el.classList.remove('wrong');
+            void el.offsetWidth; // reflow for animation restart
+            el.classList.add('wrong');
+            ping(400);
+            setTimeout(() => {
+                el.classList.remove('wrong');
+                mathInput = '';
+                el.textContent = '—';
+            }, 500);
+        }
+    } else {
+        if (mathInput.length < 5) {
+            mathInput += v;
+            el.textContent = mathInput;
+        }
+    }
+}
+
+// ── init ──
+async function initApp() {
+    await ensureAudio();
+    const def = new Date(Date.now() + 8*3600000);
+    document.getElementById('alarm-time').value = `${pad(def.getHours())}:${pad(def.getMinutes())}`;
+    show('setup');
+}
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
