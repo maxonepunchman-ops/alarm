@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="WakeForce">
+    <link rel="manifest" href="manifest.json">
+    <title>WakeForce — Будильник</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        :root {
+            --bg: #08080f;
+            --surface: #11111e;
+            --surface2: #18182a;
+            --accent: #ff6b35;
+            --accent2: #ff2d5e;
+            --blue: #4da6ff;
+            --green: #00e676;
+            --text: #e8e8ff;
+            --muted: #5a5a80;
+            --border: #252540;
+        }
+
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 430px;
+            height: 100%;
+            height: -webkit-fill-available;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 24px;
+            gap: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .screen.active { opacity: 1; pointer-events: all; }
+
+        /* --- Buttons --- */
+        .btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 17px 24px;
+            border-radius: 16px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.1s, opacity 0.1s;
+            letter-spacing: 0.2px;
+        }
+        .btn:active { transform: scale(0.96); opacity: 0.8; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+        .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .btn-danger { background: linear-gradient(135deg, #cc0030, #ff002a); color: #fff; font-size: 18px; padding: 20px; border-radius: 20px; }
+        .btn-sm { padding: 12px; font-size: 13px; }
+
+        /* --- Label --- */
+        .label {
+            width: 100%;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--muted);
+            margin-bottom: -10px;
+        }
+
+        /* --- Warning --- */
+        .warn {
+            width: 100%;
+            background: rgba(255,180,0,0.08);
+            border: 1px solid rgba(255,180,0,0.25);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #ffcc44;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* ===================== WELCOME ===================== */
+        #screen-welcome { text-align: center; }
+        .wlc-emoji { font-size: 90px; line-height: 1; margin-bottom: 4px; }
+        .wlc-title {
+            font-size: 40px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .wlc-sub { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 280px; }
+
+        /* ===================== SETUP ===================== */
+        #screen-setup { justify-content: flex-start; padding-top: 55px; }
+
+        .cur-time {
+            font-size: 52px;
+            font-weight: 200;
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text);
+            text-align: center;
+            width: 100%;
+        }
+
+        .time-input-wrap {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        #alarm-time {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 44px;
+            font-weight: 300;
+            text-align: center;
+            padding: 10px 16px;
+            font-family: inherit;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+            -webkit-appearance: none;
+        }
+        #alarm-time:focus { outline: none; }
+
+        .sound-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .sound-opt {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 14px 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+        .sound-opt:active { transform: scale(0.94); }
+        .sound-opt.active {
+            border-color: var(--accent);
+            background: rgba(255,107,53,0.12);
+        }
+        .sound-opt .ico { font-size: 30px; }
+        .sound-opt .lbl { font-size: 12px; font-weight: 600; color: var(--muted); }
+        .sound-opt.active .lbl { color: var(--accent); }
+
+        /* ===================== ACTIVE ===================== */
+        #screen-active { text-align: center; }
+
+        .active-check { font-size: 60px; margin-bottom: -4px; }
+        .act-label { color: var(--muted); font-size: 13px; }
+        .act-time {
+            font-size: 74px;
+            font-weight: 200;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+        }
+        .countdown-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .cd-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .countdown {
+            font-size: 30px;
+            font-weight: 300;
+            font-variant-numeric: tabular-nums;
+            color: var(--blue);
+            letter-spacing: 2px;
+        }
+        .snd-badge {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 6px 18px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        /* ===================== RINGING ===================== */
+        #screen-ringing { background: var(--bg); text-align: center; }
+        #screen-ringing.ring-pulse { animation: bgPulse 0.9s ease-in-out infinite; }
+        @keyframes bgPulse {
+            0%,100% { background: #0f0008; }
+            50%      { background: #1e0010; }
+        }
+
+        .ring-bell { font-size: 110px; animation: bellShake 0.45s ease-in-out infinite; display: block; }
+        @keyframes bellShake {
+            0%,100% { transform: rotate(-10deg) scale(1); }
+            50%      { transform: rotate(10deg) scale(1.05); }
+        }
+        .ring-title {
+            font-size: 46px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff4400, #ff005e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+        .ring-sub { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 260px; }
+
+        /* ===================== SCANNING ===================== */
+        #screen-scanning { justify-content: flex-start; padding-top: 48px; gap: 14px; }
+
+        .scan-header { font-size: 20px; font-weight: 700; text-align: center; }
+
+        .cam-wrap {
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 4/3;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+        #cam-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .cam-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .scan-frame {
+            width: 130px;
+            height: 130px;
+            border: 2.5px solid var(--accent);
+            border-radius: 18px;
+            animation: framePulse 1s ease-in-out infinite;
+        }
+        @keyframes framePulse {
+            0%,100% { opacity: 0.35; transform: scale(0.96); }
+            50%      { opacity: 1; transform: scale(1.04); }
+        }
+
+        .scan-status { font-size: 13px; color: var(--muted); text-align: center; min-height: 18px; }
+        .scan-prog { font-size: 15px; font-weight: 600; text-align: center; }
+
+        .obj-slots {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .obj-slot {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 6px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            line-height: 1.3;
+        }
+        .obj-slot.filled {
+            border-color: var(--green);
+            background: rgba(0,230,118,0.1);
+            color: var(--green);
+            animation: slotPop 0.3s ease-out;
+        }
+        @keyframes slotPop {
+            0%   { transform: scale(0.85); }
+            60%  { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <!-- WELCOME -->
+    <div class="screen active" id="screen-welcome">
+        <div class="wlc-emoji">⏰</div>
+        <div class="wlc-title">WakeForce</div>
+        <div class="wlc-sub">Будильник, который невозможно выключить — нужно отсканировать 3 предмета</div>
+        <div style="height:4px"></div>
+        <button class="btn btn-primary" style="font-size:18px;padding:20px;border-radius:20px" onclick="initApp()">
+            Начать
+        </button>
+        <div class="warn">
+            ⚠️ Держите телефон незаблокированным и переключите звук с беззвучного
+        </div>
+    </div>
+
+    <!-- SETUP -->
+    <div class="screen" id="screen-setup">
+        <div class="cur-time" id="cur-time">00:00:00</div>
+
+        <div class="label">Время будильника</div>
+        <div class="time-input-wrap">
+            <input type="time" id="alarm-time">
+        </div>
+
+        <div class="label">Звук</div>
+        <div class="sound-grid">
+            <button class="sound-opt active" onclick="pickSound('siren',this)">
+                <span class="ico">🚨</span>
+                <span class="lbl">Сирена</span>
+            </button>
+            <button class="sound-opt" onclick="pickSound('birds',this)">
+                <span class="ico">🐦</span>
+                <span class="lbl">Птицы</span>
+            </button>
+            <button class="sound-opt" onclick="pickSound('horn',this)">
+                <span class="ico">📯</span>
+                <span class="lbl">Горн</span>
+            </button>
+        </div>
+
+        <button class="btn btn-primary" onclick="setAlarm()">Установить будильник</button>
+        <button class="btn btn-secondary btn-sm" onclick="testSound()">▶ Проверить звук (3 сек)</button>
+    </div>
+
+    <!-- ACTIVE (waiting for alarm) -->
+    <div class="screen" id="screen-active">
+        <div class="active-check">✅</div>
+        <div>
+            <div class="act-label">Будильник на</div>
+            <div class="act-time" id="act-time">00:00</div>
+        </div>
+        <div class="countdown-wrap">
+            <div class="cd-label">Осталось</div>
+            <div class="countdown" id="countdown">00:00:00</div>
+        </div>
+        <div class="snd-badge" id="snd-badge">🚨 Сирена</div>
+        <div class="warn">⚠️ Не блокируйте экран — будильник работает только пока приложение открыто</div>
+        <button class="btn btn-secondary btn-sm" onclick="cancelAlarm()">✕ Отменить</button>
+    </div>
+
+    <!-- RINGING -->
+    <div class="screen" id="screen-ringing">
+        <span class="ring-bell">⏰</span>
+        <div class="ring-title">ПОДЪЁМ!</div>
+        <div class="ring-sub">Выключить можно только отсканировав 3 разных предмета</div>
+        <div style="height:4px"></div>
+        <button class="btn btn-danger" onclick="openScan()">📷 Сканировать предметы</button>
+    </div>
+
+    <!-- SCANNING -->
+    <div class="screen" id="screen-scanning">
+        <div class="scan-header">Наведи камеру на предмет</div>
+        <div class="cam-wrap">
+            <video id="cam-video" playsinline autoplay muted></video>
+            <div class="cam-overlay"><div class="scan-frame"></div></div>
+        </div>
+        <div class="scan-status" id="scan-status">Загрузка камеры...</div>
+        <div class="scan-prog" id="scan-prog">Найдено: 0 / 3</div>
+        <div class="obj-slots">
+            <div class="obj-slot" id="slot-0">?</div>
+            <div class="obj-slot" id="slot-1">?</div>
+            <div class="obj-slot" id="slot-2">?</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="backToRing()">← Назад</button>
+    </div>
+
+</div>
+
+<script>
+// =============================================================
+//  WakeForce — Logic
+// =============================================================
+
+const SOUND_NAMES = { siren:'🚨 Сирена', birds:'🐦 Птицы', horn:'📯 Горн' };
+
+const RU = {
+    'person':'Человек','chair':'Стул','couch':'Диван',
+    'bed':'Кровать','dining table':'Стол','potted plant':'Растение',
+    'tvmonitor':'Телевизор','tv':'Телевизор',
+    'laptop':'Ноутбук','mouse':'Мышь','keyboard':'Клавиатура',
+    'remote':'Пульт','cell phone':'Телефон','book':'Книга',
+    'clock':'Часы','vase':'Ваза','bottle':'Бутылка',
+    'cup':'Кружка','bowl':'Миска','backpack':'Рюкзак',
+    'umbrella':'Зонт','handbag':'Сумка','scissors':'Ножницы',
+    'teddy bear':'Мишка','toothbrush':'Зубная щётка',
+    'hair drier':'Фен','suitcase':'Чемодан',
+    'wine glass':'Бокал','sports ball':'Мяч',
+    'cat':'Кошка','dog':'Собака','bird':'Птица',
+    'microwave':'Микроволновка','refrigerator':'Холодильник',
+    'sink':'Раковина','oven':'Духовка',
+    'apple':'Яблоко','banana':'Банан','orange':'Апельсин',
+    'fork':'Вилка','knife':'Нож','spoon':'Ложка',
+    'cake':'Торт','pizza':'Пицца','donut':'Пончик',
+    'bicycle':'Велосипед','car':'Машина','tie':'Галстук',
+    'toilet':'Туалет'
+};
+
+// ── State ──
+let actx = null;
+let soundType = 'siren';
+let alarmAt = null;
+let checkTimer = null;
+let sndNodes = [];
+let sndTimer = null;
+let found = [];
+let model = null;
+let modelLoading = false;
+let camStream = null;
+let detectTimer = null;
+let wlock = null;
+
+// ── Screens ──
+function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+}
+
+// ── Audio ──
+async function ensureAudio() {
+    if (actx) { if (actx.state === 'suspended') await actx.resume(); return; }
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    actx = new Ctx();
+    if (actx.state === 'suspended') await actx.resume();
+    const buf = actx.createBuffer(1,1,22050);
+    const src = actx.createBufferSource();
+    src.buffer = buf; src.connect(actx.destination); src.start(0);
+}
+
+function killSound() {
+    sndNodes.forEach(n => { try { n.stop(); } catch(e){} });
+    sndNodes = [];
+    if (sndTimer) { clearInterval(sndTimer); sndTimer = null; }
+}
+
+// ── Siren ──
+function playSiren() {
+    const comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -3; comp.ratio.value = 20;
+    comp.connect(actx.destination);
+    const mg = actx.createGain(); mg.gain.value = 0.95; mg.connect(comp);
+
+    const wail = () => {
+        const now = actx.currentTime;
+        for (const det of [0, 4]) {
+            const o = actx.createOscillator();
+            const g = actx.createGain();
+            o.type = 'sawtooth'; g.gain.value = 0.5;
+            o.connect(g); g.connect(mg);
+            o.frequency.setValueAtTime(560 + det, now);
+            o.frequency.linearRampToValueAtTime(1140 + det, now + 0.85);
+            o.frequency.linearRampToValueAtTime(560 + det, now + 1.7);
+            o.start(now); o.stop(now + 1.7);
+            sndNodes.push(o);
+        }
+    };
+    wail();
+    sndTimer = setInterval(wail, 1700);
+}
+
+// ── Birds ──
+function playBirds() {
+    const flock = () => {
+        const cnt = 3 + Math.floor(Math.random() * 3);
+        for (let b = 0; b < cnt; b++) {
+            const bDelay = b * 0.28 + Math.random() * 0.12;
+            const baseF = 1100 + Math.random() * 2600;
+            const nChirps = 2 + Math.floor(Math.random() * 4);
+            for (let c = 0; c < nChirps; c++) {
+                const t = actx.currentTime + bDelay + c * 0.11;
+                const o = actx.createOscillator();
+                const env = actx.createGain();
+                o.type = 'sine';
+                o.connect(env); env.connect(actx.destination);
+                o.frequency.setValueAtTime(baseF, t);
+                o.frequency.linearRampToValueAtTime(baseF * (1.12 + Math.random() * 0.1), t + 0.04);
+                o.frequency.linearRampToValueAtTime(baseF * 0.91, t + 0.09);
+                env.gain.setValueAtTime(0, t);
+                env.gain.linearRampToValueAtTime(0.6, t + 0.025);
+                env.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+                o.start(t); o.stop(t + 0.1);
+                sndNodes.push(o);
+            }
+        }
+    };
+    flock();
+    sndTimer = setInterval(flock, 950);
+}
+
+// ── Horn ──
+function playHorn() {
+    const comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -3; comp.ratio.value = 20;
+    comp.connect(actx.destination);
+    const mg = actx.createGain(); mg.gain.value = 0.85; mg.connect(comp);
+
+    const dist = actx.createWaveShaper();
+    const c = new Float32Array(512);
+    for (let i = 0; i < 512; i++) {
+        const x = (i * 2) / 512 - 1;
+        c[i] = (3 + 150) * x / (Math.PI + 150 * Math.abs(x));
+    }
+    dist.curve = c;
+    mg.connect(dist); dist.connect(comp);
+
+    const blast = () => {
+        const now = actx.currentTime;
+        [110, 220, 330, 440].forEach((freq, i) => {
+            const o = actx.createOscillator();
+            const g = actx.createGain();
+            o.type = 'square'; o.frequency.value = freq;
+            o.connect(g); g.connect(mg);
+            g.gain.setValueAtTime(0, now);
+            g.gain.linearRampToValueAtTime(0.28 - i * 0.04, now + 0.03);
+            g.gain.setValueAtTime(0.28 - i * 0.04, now + 0.65);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.95);
+            o.start(now); o.stop(now + 0.95);
+            sndNodes.push(o);
+        });
+    };
+    blast();
+    sndTimer = setInterval(blast, 1100);
+}
+
+function startSound() {
+    killSound();
+    if (!actx) return;
+    if (soundType === 'siren') playSiren();
+    else if (soundType === 'birds') playBirds();
+    else playHorn();
+}
+
+// ── Ping ──
+function ping() {
+    if (!actx) return;
+    const o = actx.createOscillator(); const g = actx.createGain();
+    o.connect(g); g.connect(actx.destination);
+    o.type = 'sine'; o.frequency.setValueAtTime(1200, actx.currentTime);
+    o.frequency.linearRampToValueAtTime(1700, actx.currentTime + 0.08);
+    g.gain.setValueAtTime(0.45, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.35);
+    o.start(); o.stop(actx.currentTime + 0.35);
+}
+
+// ── Wake Lock ──
+async function grabWakeLock() {
+    try { if ('wakeLock' in navigator) wlock = await navigator.wakeLock.request('screen'); }
+    catch(e){}
+}
+function dropWakeLock() { if (wlock) { wlock.release().catch(()=>{}); wlock = null; } }
+
+// ── Clock ──
+function tickClock() {
+    const d = new Date();
+    const el = document.getElementById('cur-time');
+    if (el) el.textContent =
+        `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+setInterval(tickClock, 1000); tickClock();
+function pad(n) { return String(n).padStart(2,'0'); }
+
+// ── Sound selector ──
+function pickSound(type, btn) {
+    soundType = type;
+    document.querySelectorAll('.sound-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+async function testSound() {
+    await ensureAudio();
+    startSound();
+    setTimeout(killSound, 3000);
+}
+
+// ── Set Alarm ──
+async function setAlarm() {
+    const inp = document.getElementById('alarm-time');
+    if (!inp.value) { alert('Выберите время'); return; }
+    const [h, m] = inp.value.split(':').map(Number);
+    const t = new Date();
+    t.setHours(h, m, 0, 0);
+    if (t <= new Date()) t.setDate(t.getDate() + 1);
+    alarmAt = t;
+
+    document.getElementById('act-time').textContent = `${pad(h)}:${pad(m)}`;
+    document.getElementById('snd-badge').textContent = SOUND_NAMES[soundType];
+
+    if (checkTimer) clearInterval(checkTimer);
+    checkTimer = setInterval(checkAlarm, 1000);
+
+    preloadModel();
+    grabWakeLock();
+    show('active');
+}
+
+function cancelAlarm() {
+    if (checkTimer) { clearInterval(checkTimer); checkTimer = null; }
+    alarmAt = null;
+    dropWakeLock();
+    show('setup');
+}
+
+function checkAlarm() {
+    if (!alarmAt) return;
+    if (new Date() >= alarmAt) {
+        clearInterval(checkTimer); checkTimer = null;
+        fireAlarm();
+    } else {
+        const diff = alarmAt - Date.now();
+        const h = Math.floor(diff / 3600000);
+        const mn = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        const el = document.getElementById('countdown');
+        if (el) el.textContent = `${pad(h)}:${pad(mn)}:${pad(s)}`;
+    }
+}
+
+function fireAlarm() {
+    ensureAudio().then(startSound);
+    grabWakeLock();
+    if (navigator.vibrate) navigator.vibrate([600,150,600,150,600,150,600,150,600]);
+    document.getElementById('screen-ringing').classList.add('ring-pulse');
+    show('ringing');
+}
+
+// ── TF.js model ──
+function loadScript(src) {
+    return new Promise((ok, fail) => {
+        if (document.querySelector(`script[src="${src}"]`)) { ok(); return; }
+        const s = document.createElement('script');
+        s.src = src; s.onload = ok; s.onerror = fail;
+        document.head.appendChild(s);
+    });
+}
+
+async function preloadModel() {
+    if (model || modelLoading) return;
+    modelLoading = true;
+    try {
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+        model = await window.cocoSsd.load();
+        console.log('AI model ready');
+    } catch(e) { console.warn('Model failed:', e); }
+    modelLoading = false;
+}
+
+// ── Scanning ──
+async function openScan() {
+    found = [];
+    updateSlots();
+    document.getElementById('scan-status').textContent = 'Загрузка камеры...';
+    document.getElementById('scan-prog').textContent = 'Найдено: 0 / 3';
+    show('scanning');
+
+    try {
+        camStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } },
+            audio: false
+        });
+        const vid = document.getElementById('cam-video');
+        vid.srcObject = camStream;
+        await vid.play();
+
+        if (!model) {
+            document.getElementById('scan-status').textContent = 'Загрузка AI (~10 МБ)...';
+            await preloadModel();
+        }
+
+        if (!model) {
+            document.getElementById('scan-status').textContent = '❌ Ошибка загрузки AI. Проверьте интернет.';
+            return;
+        }
+
+        document.getElementById('scan-status').textContent = 'Медленно водите камерой по комнате';
+
+        const offscreen = document.createElement('canvas');
+        offscreen.width = 320; offscreen.height = 240;
+        const oc = offscreen.getContext('2d');
+
+        detectTimer = setInterval(async () => {
+            const vid = document.getElementById('cam-video');
+            if (!vid || vid.readyState < 2 || !model) return;
+            try {
+                oc.drawImage(vid, 0, 0, 320, 240);
+                const preds = await model.detect(offscreen);
+                for (const p of preds) {
+                    if (p.score >= 0.52 && !found.includes(p.class)) {
+                        found.push(p.class);
+                        ping();
+                        updateSlots();
+                        document.getElementById('scan-prog').textContent =
+                            `Найдено: ${found.length} / 3`;
+                        if (found.length >= 3) {
+                            clearInterval(detectTimer); detectTimer = null;
+                            document.getElementById('scan-status').textContent = '🎉 Молодец! Будильник выключен!';
+                            setTimeout(dismiss, 1600);
+                        } else {
+                            document.getElementById('scan-status').textContent =
+                                `✅ ${RU[p.class] || p.class}! Ищи следующий...`;
+                        }
+                        break;
+                    }
+                }
+            } catch(e){}
+        }, 600);
+
+    } catch(e) {
+        console.error(e);
+        document.getElementById('scan-status').textContent = '❌ Нет доступа к камере';
+    }
+}
+
+function stopCam() {
+    if (detectTimer) { clearInterval(detectTimer); detectTimer = null; }
+    if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+}
+
+function backToRing() { stopCam(); show('ringing'); }
+
+function updateSlots() {
+    for (let i = 0; i < 3; i++) {
+        const el = document.getElementById('slot-' + i);
+        if (found[i]) {
+            el.classList.add('filled');
+            el.textContent = '✓ ' + (RU[found[i]] || found[i]);
+        } else {
+            el.classList.remove('filled');
+            el.textContent = '?';
+        }
+    }
+}
+
+function dismiss() {
+    killSound();
+    stopCam();
+    dropWakeLock();
+    document.getElementById('screen-ringing').classList.remove('ring-pulse');
+    if (navigator.vibrate) navigator.vibrate(0);
+    alarmAt = null;
+    found = [];
+    updateSlots();
+    show('setup');
+}
+
+// ── Init ──
+async function initApp() {
+    await ensureAudio();
+    const def = new Date(Date.now() + 8 * 3600000);
+    document.getElementById('alarm-time').value =
+        `${pad(def.getHours())}:${pad(def.getMinutes())}`;
+    show('setup');
+
+    // Generate apple-touch-icon via canvas
+    try {
+        const cv = document.createElement('canvas');
+        cv.width = 512; cv.height = 512;
+        const ctx = cv.getContext('2d');
+        ctx.fillStyle = '#08080f';
+        const r = 100;
+        ctx.beginPath();
+        ctx.moveTo(r,0); ctx.lineTo(512-r,0);
+        ctx.quadraticCurveTo(512,0,512,r);
+        ctx.lineTo(512,512-r);
+        ctx.quadraticCurveTo(512,512,512-r,512);
+        ctx.lineTo(r,512); ctx.quadraticCurveTo(0,512,0,512-r);
+        ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0);
+        ctx.closePath(); ctx.fill();
+        ctx.font = '340px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⏰', 256, 270);
+        cv.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            let link = document.querySelector("link[rel='apple-touch-icon']");
+            if (!link) { link = document.createElement('link'); link.rel = 'apple-touch-icon'; document.head.appendChild(link); }
+            link.href = url;
+        });
+    } catch(e){}
+}
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
