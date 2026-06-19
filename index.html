@@ -426,6 +426,13 @@ function startPreAlarm() {
     if (!preAlarmAudio) return;
     preAlarmAudio.currentTime = 0;
     preAlarmAudio.play().catch(() => {});
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: 'WakeForce', artist: 'Будильник активен', album: 'Таймер работает'
+        });
+        navigator.mediaSession.setActionHandler('play', () => preAlarmAudio.play().catch(() => {}));
+        navigator.mediaSession.setActionHandler('pause', () => {});
+    }
 }
 function stopPreAlarm() {
     if (!preAlarmAudio) return;
@@ -754,11 +761,11 @@ function np(v) {
     }
 }
 
-// ── Push-ups (COCO-SSD person detection — та же ИИ что для предметов) ──
+// ── Push-ups ──
 async function goPushups() {
-    puCount = 0; puState = 'calib'; puCalibFrames = 0; puBaseline = null; puPeakDelta = 0;
+    puCount = 0; puState = 'calib'; puCalibFrames = 0; puBaseline = null;
     document.getElementById('pu-count').textContent = '0';
-    document.getElementById('pu-status').textContent = 'Встань перед камерой';
+    document.getElementById('pu-status').textContent = 'Встань в упор лёжа';
     document.getElementById('pu-hint').textContent = 'Загрузка камеры...';
     show('pushups');
     await startPuCam();
@@ -767,67 +774,103 @@ async function goPushups() {
 async function startPuCam() {
     try {
         puStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: {ideal:'user'}, width:{ideal:640}, height:{ideal:480} },
+            video: { facingMode: 'user', width:{ideal:640}, height:{ideal:480} },
             audio: false
         });
         const vid = document.getElementById('pu-video');
         vid.srcObject = puStream;
         await vid.play();
-        if (!tfModel) {
-            document.getElementById('pu-hint').textContent = 'Загрузка COCO-SSD...';
-            await preloadModel();
+        if (!puNet) {
+            document.getElementById('pu-hint').textContent = 'Загрузка PoseNet (~3 МБ)...';
+            await loadPuNet();
         }
-        if (!tfModel) {
-            document.getElementById('pu-hint').textContent = '❌ ИИ не загрузился. Попробуй другой способ.';
+        if (!puNet) {
+            document.getElementById('pu-hint').textContent = '❌ PoseNet не загрузился. Попробуй другой способ.';
             return;
         }
-        document.getElementById('pu-hint').textContent = 'COCO-SSD активна — стань в кадр';
-        detectPuLoop();
+        document.getElementById('pu-hint').textContent = 'Калибровка позы...';
+        detectPose();
     } catch(e) {
         document.getElementById('pu-hint').textContent = '❌ Нет доступа к камере';
     }
 }
 
-async function detectPuLoop() {
+async function loadPuNet() {
+    if (puNet || puNetLoading) return;
+    puNetLoading = true;
+    try {
+        if (!window.tf) {
+            await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
+        }
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@2.2.2/dist/posenet.min.js');
+        puNet = await window.posenet.load({ architecture: 'MobileNetV1', outputStride: 16, multiplier: 0.5 });
+    } catch(e) { console.warn('PoseNet fail:', e); }
+    puNetLoading = false;
+}
+
+const PU_BONES = [[5,6],[5,7],[7,9],[6,8],[8,10],[5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16]];
+
+async function detectPose() {
     const vid = document.getElementById('pu-video');
     const canvas = document.getElementById('pu-canvas');
-    if (!vid || !canvas || !tfModel || vid.readyState < 2) {
-        puAnimFrame = setTimeout(detectPuLoop, 250);
+    if (!vid || !canvas || !puNet || vid.readyState < 2) {
+        puAnimFrame = requestAnimationFrame(detectPose);
         return;
     }
     canvas.width = vid.videoWidth || 320;
     canvas.height = vid.videoHeight || 240;
     const ctx = canvas.getContext('2d');
     try {
-        const preds = await tfModel.detect(vid);
+        const pose = await puNet.estimateSinglePose(vid, { flipHorizontal: true });
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // Pick the highest-confidence person
-        const person = preds.filter(p => p.class === 'person' && p.score > 0.35)
-                            .sort((a, b) => b.score - a.score)[0];
-        if (person) {
-            const [bx, by, bw, bh] = person.bbox;
-            const centerY = by + bh / 2;
-            const thr = Math.max(bh * 0.04, 10); // 4% of person bbox height, min 10px
-            // Draw person box
-            ctx.strokeStyle = '#00e676'; ctx.lineWidth = 3; ctx.setLineDash([]);
-            ctx.strokeRect(bx, by, bw, bh);
-            ctx.fillStyle = '#00e676'; ctx.font = 'bold 13px sans-serif';
-            ctx.fillText('человек ' + Math.round(person.score * 100) + '%', bx + 4, by + 18);
-            // White tracking line through center
-            hLine(ctx, centerY, canvas.width, '#ffffff', 3, false);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText('● центр', 8, centerY - 6);
-            if (puBaseline != null) {
-                hLine(ctx, puBaseline, canvas.width, '#00e676', 2, true);
-                hLine(ctx, puBaseline + thr, canvas.width, '#ff2d5e', 1.5, true);
-                hLine(ctx, puBaseline - thr, canvas.width, '#ff2d5e', 1.5, true);
+        const kps = pose.keypoints;
+        const W = canvas.width, H = canvas.height;
+        // Draw bones
+        ctx.lineWidth = 3;
+        for (const [a, b] of PU_BONES) {
+            const ka = kps[a], kb = kps[b];
+            if (ka.score > 0.3 && kb.score > 0.3) {
+                ctx.beginPath();
+                ctx.moveTo(ka.position.x, ka.position.y);
+                ctx.lineTo(kb.position.x, kb.position.y);
+                ctx.strokeStyle = '#00e676';
+                ctx.stroke();
             }
-            processPu(centerY, thr);
+        }
+        // Draw keypoints
+        for (let i = 0; i < kps.length; i++) {
+            const kp = kps[i];
+            if (kp.score > 0.3) {
+                ctx.beginPath();
+                ctx.arc(kp.position.x, kp.position.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = (i >= 5 && i <= 10) ? '#ff9800' : '#00e676';
+                ctx.fill();
+            }
+        }
+        // ── Tracked vertical position: centroid of torso points (nose, shoulders, hips) ──
+        const TRACK = [0, 5, 6, 11, 12];
+        let sum = 0, cnt = 0;
+        for (const idx of TRACK) { const k = kps[idx]; if (k.score > 0.3) { sum += k.position.y; cnt++; } }
+        const thr = H * 0.07;
+        if (cnt >= 2) {
+            const trackedY = sum / cnt;
+            // Current tracking line (white, thick) — the axis it counts by
+            hLine(ctx, trackedY, W, '#ffffff', 3, false);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('● трек', 8, trackedY - 6);
+            if (puBaseline != null) {
+                // Baseline (green) + trigger zone (red dashed)
+                hLine(ctx, puBaseline, W, '#00e676', 2, true);
+                hLine(ctx, puBaseline + thr, W, '#ff2d5e', 1.5, true);
+                hLine(ctx, puBaseline - thr, W, '#ff2d5e', 1.5, true);
+            }
+            processPu(trackedY, thr);
         } else {
-            document.getElementById('pu-hint').textContent = 'COCO-SSD: человек не найден — стань ближе';
+            document.getElementById('pu-hint').textContent = 'Не вижу тело целиком — отодвинь камеру';
         }
     } catch(e) {}
-    puAnimFrame = setTimeout(detectPuLoop, 250); // ~4fps достаточно для отжиманий
+    puAnimFrame = requestAnimationFrame(detectPose);
 }
 
 function hLine(ctx, y, w, color, width, dashed) {
@@ -869,7 +912,7 @@ function processPu(y, thr) {
         }
     } else if (puState === 'bottom') {
         // Вернулся близко к стартовой позиции → засчитан повтор
-        if (Math.abs(delta) < thr * 0.55) {
+        if (Math.abs(delta) < thr * 0.4) {
             puState = 'top';
             puCount++;
             ping(1400);
@@ -888,7 +931,7 @@ function processPu(y, thr) {
 }
 
 function stopPuCam() {
-    if (puAnimFrame) { clearTimeout(puAnimFrame); puAnimFrame = null; }
+    if (puAnimFrame) { cancelAnimationFrame(puAnimFrame); puAnimFrame = null; }
     if (puStream) { puStream.getTracks().forEach(t => t.stop()); puStream = null; }
     const canvas = document.getElementById('pu-canvas');
     if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
