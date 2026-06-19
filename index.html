@@ -139,6 +139,18 @@ body{
 .np-del{color:var(--dim);font-size:20px}
 .np-ok{background:var(--grn);color:#000;border-color:var(--grn)}
 .np-ok:active{background:#00c060}
+.btn-grn{background:linear-gradient(135deg,#009944,#00cc55);color:#fff;font-size:17px;padding:18px;border-radius:18px}
+
+/* ── Push-ups ── */
+#screen-pushups{justify-content:flex-start;padding-top:28px;gap:10px}
+.pu-hdr{font-size:20px;font-weight:700;text-align:center}
+.pu-count{font-size:72px;font-weight:200;text-align:center;line-height:1;font-variant-numeric:tabular-nums}
+.pu-count .pu-of{font-size:28px;color:var(--dim);font-weight:300}
+.pu-status{font-size:15px;text-align:center;color:var(--or);font-weight:600;min-height:22px}
+.pu-cam-wrap{width:100%;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:4/3;position:relative;border:1px solid var(--brd)}
+#pu-video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#pu-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transform:scaleX(-1)}
+.pu-hint{font-size:12px;color:var(--dim);text-align:center;min-height:16px}
 </style>
 </head>
 <body>
@@ -202,6 +214,20 @@ body{
     <div class="ring-sub">Выберите способ выключить:</div>
     <button class="btn btn-danger" onclick="goScan()">📷 Сканировать 3 предмета</button>
     <button class="btn btn-blue" onclick="goMath()">🧮 Решить 3 примера</button>
+    <button class="btn btn-grn" onclick="goPushups()">💪 15 отжиманий</button>
+</div>
+
+<!-- PUSHUPS -->
+<div class="screen" id="screen-pushups">
+    <div class="pu-hdr">💪 Отжимания</div>
+    <div class="pu-count"><span id="pu-count">0</span><span class="pu-of">/15</span></div>
+    <div class="pu-status" id="pu-status">Встань в упор лёжа</div>
+    <div class="pu-cam-wrap">
+        <video id="pu-video" playsinline autoplay muted></video>
+        <canvas id="pu-canvas"></canvas>
+    </div>
+    <div class="pu-hint" id="pu-hint">Загрузка камеры...</div>
+    <button class="sm-btn" onclick="backToRingFromPu()">← Назад</button>
 </div>
 
 <!-- SCAN -->
@@ -290,6 +316,8 @@ let camStream = null, detectTmr = null;
 let wlock = null;
 let mathProbs = [], mathIdx = 0, mathInput = '';
 let roomChecked = new Set();
+let puStream = null, puNet = null, puNetLoading = false;
+let puAnimFrame = null, puCount = 0, puState = 'calib', puCalibFrames = 0, puBaseline = null;
 
 // ── Screens ──
 function show(id) {
@@ -398,6 +426,13 @@ function startPreAlarm() {
     if (!preAlarmAudio) return;
     preAlarmAudio.currentTime = 0;
     preAlarmAudio.play().catch(() => {});
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: 'WakeForce', artist: 'Будильник активен', album: 'Таймер работает'
+        });
+        navigator.mediaSession.setActionHandler('play', () => preAlarmAudio.play().catch(() => {}));
+        navigator.mediaSession.setActionHandler('pause', () => {});
+    }
 }
 function stopPreAlarm() {
     if (!preAlarmAudio) return;
@@ -550,6 +585,7 @@ function dismiss() {
     stopAlarmAudio();
     stopPreAlarm();
     stopCam();
+    stopPuCam();
     dropWakeLock();
     document.getElementById('screen-ringing').classList.remove('rpulse');
     if (navigator.vibrate) navigator.vibrate(0);
@@ -724,6 +760,142 @@ function np(v) {
         if (mathInput.length < 5) { mathInput += v; el.textContent = mathInput; }
     }
 }
+
+// ── Push-ups ──
+async function goPushups() {
+    puCount = 0; puState = 'calib'; puCalibFrames = 0; puBaseline = null;
+    document.getElementById('pu-count').textContent = '0';
+    document.getElementById('pu-status').textContent = 'Встань в упор лёжа';
+    document.getElementById('pu-hint').textContent = 'Загрузка камеры...';
+    show('pushups');
+    await startPuCam();
+}
+
+async function startPuCam() {
+    try {
+        puStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width:{ideal:640}, height:{ideal:480} },
+            audio: false
+        });
+        const vid = document.getElementById('pu-video');
+        vid.srcObject = puStream;
+        await vid.play();
+        if (!puNet) {
+            document.getElementById('pu-hint').textContent = 'Загрузка PoseNet (~3 МБ)...';
+            await loadPuNet();
+        }
+        if (!puNet) {
+            document.getElementById('pu-hint').textContent = '❌ PoseNet не загрузился. Попробуй другой способ.';
+            return;
+        }
+        document.getElementById('pu-hint').textContent = 'Калибровка позы...';
+        detectPose();
+    } catch(e) {
+        document.getElementById('pu-hint').textContent = '❌ Нет доступа к камере';
+    }
+}
+
+async function loadPuNet() {
+    if (puNet || puNetLoading) return;
+    puNetLoading = true;
+    try {
+        if (!window.tf) {
+            await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
+        }
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@2.2.2/dist/posenet.min.js');
+        puNet = await window.posenet.load({ architecture: 'MobileNetV1', outputStride: 16, multiplier: 0.5 });
+    } catch(e) { console.warn('PoseNet fail:', e); }
+    puNetLoading = false;
+}
+
+const PU_BONES = [[5,6],[5,7],[7,9],[6,8],[8,10],[5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16]];
+
+async function detectPose() {
+    const vid = document.getElementById('pu-video');
+    const canvas = document.getElementById('pu-canvas');
+    if (!vid || !canvas || !puNet || vid.readyState < 2) {
+        puAnimFrame = requestAnimationFrame(detectPose);
+        return;
+    }
+    canvas.width = vid.videoWidth || 320;
+    canvas.height = vid.videoHeight || 240;
+    const ctx = canvas.getContext('2d');
+    try {
+        const pose = await puNet.estimateSinglePose(vid, { flipHorizontal: true });
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const kps = pose.keypoints;
+        // Draw bones
+        ctx.lineWidth = 2.5;
+        for (const [a, b] of PU_BONES) {
+            const ka = kps[a], kb = kps[b];
+            if (ka.score > 0.3 && kb.score > 0.3) {
+                ctx.beginPath();
+                ctx.moveTo(ka.position.x, ka.position.y);
+                ctx.lineTo(kb.position.x, kb.position.y);
+                ctx.strokeStyle = '#00e676';
+                ctx.stroke();
+            }
+        }
+        // Draw keypoints
+        for (let i = 0; i < kps.length; i++) {
+            const kp = kps[i];
+            if (kp.score > 0.3) {
+                ctx.beginPath();
+                ctx.arc(kp.position.x, kp.position.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = (i >= 5 && i <= 10) ? '#ff9800' : '#00e676';
+                ctx.fill();
+            }
+        }
+        processPu(kps);
+    } catch(e) {}
+    puAnimFrame = requestAnimationFrame(detectPose);
+}
+
+function processPu(kps) {
+    const ls = kps[5], rs = kps[6];
+    if (ls.score < 0.35 || rs.score < 0.35) return;
+    const shoulderY = (ls.position.y + rs.position.y) / 2;
+    if (puState === 'calib') {
+        puCalibFrames++;
+        puBaseline = shoulderY;
+        if (puCalibFrames >= 20) {
+            puState = 'up';
+            document.getElementById('pu-status').textContent = 'Опускайся вниз ↓';
+            document.getElementById('pu-hint').textContent = 'Опусти грудь к полу';
+        }
+        return;
+    }
+    if (puState === 'up') {
+        if (shoulderY > puBaseline * 1.18) {
+            puState = 'down';
+            document.getElementById('pu-status').textContent = 'Поднимайся вверх ↑';
+        }
+    } else if (puState === 'down') {
+        if (shoulderY < puBaseline * 1.07) {
+            puState = 'up';
+            puCount++;
+            ping(1400);
+            document.getElementById('pu-count').textContent = puCount;
+            if (puCount >= 15) {
+                document.getElementById('pu-status').textContent = '🎉 Готово!';
+                document.getElementById('pu-hint').textContent = 'Отличная работа!';
+                cancelAnimationFrame(puAnimFrame); puAnimFrame = null;
+                setTimeout(dismiss, 1400);
+                return;
+            }
+            document.getElementById('pu-status').textContent = 'Опускайся вниз ↓';
+        }
+    }
+}
+
+function stopPuCam() {
+    if (puAnimFrame) { cancelAnimationFrame(puAnimFrame); puAnimFrame = null; }
+    if (puStream) { puStream.getTracks().forEach(t => t.stop()); puStream = null; }
+    const canvas = document.getElementById('pu-canvas');
+    if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
+}
+
+function backToRingFromPu() { stopPuCam(); show('ringing'); }
 
 // ── Init ──
 async function initApp() {
