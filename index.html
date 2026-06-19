@@ -426,13 +426,6 @@ function startPreAlarm() {
     if (!preAlarmAudio) return;
     preAlarmAudio.currentTime = 0;
     preAlarmAudio.play().catch(() => {});
-    if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-            title: 'WakeForce', artist: 'Будильник активен', album: 'Таймер работает'
-        });
-        navigator.mediaSession.setActionHandler('play', () => preAlarmAudio.play().catch(() => {}));
-        navigator.mediaSession.setActionHandler('pause', () => {});
-    }
 }
 function stopPreAlarm() {
     if (!preAlarmAudio) return;
