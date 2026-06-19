@@ -1,4 +1,4 @@
-const CACHE = 'wakeforce-v1';
+const CACHE = 'wakeforce-v2';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {

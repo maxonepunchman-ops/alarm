@@ -847,18 +847,18 @@ async function detectPose() {
                 ctx.fill();
             }
         }
-        // ── Tracked vertical position: centroid of torso points (nose, shoulders, hips) ──
-        const TRACK = [0, 5, 6, 11, 12];
+        // ── Tracked vertical position: centroid of visible torso points ──
+        const TRACK = [0, 5, 6, 11, 12]; // nose, shoulders, hips
         let sum = 0, cnt = 0;
-        for (const idx of TRACK) { const k = kps[idx]; if (k.score > 0.3) { sum += k.position.y; cnt++; } }
-        const thr = H * 0.07;
-        if (cnt >= 2) {
+        for (const idx of TRACK) { const k = kps[idx]; if (k.score > 0.15) { sum += k.position.y; cnt++; } }
+        const thr = 22; // fixed 22px — works for any video resolution
+        if (cnt >= 1) {
             const trackedY = sum / cnt;
-            // Current tracking line (white, thick) — the axis it counts by
+            // Current tracking line (white) — the axis it counts by
             hLine(ctx, trackedY, W, '#ffffff', 3, false);
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 13px sans-serif';
-            ctx.fillText('● трек', 8, trackedY - 6);
+            ctx.fillText('● трек (' + cnt + ')', 8, trackedY - 6);
             if (puBaseline != null) {
                 // Baseline (green) + trigger zone (red dashed)
                 hLine(ctx, puBaseline, W, '#00e676', 2, true);
@@ -867,7 +867,7 @@ async function detectPose() {
             }
             processPu(trackedY, thr);
         } else {
-            document.getElementById('pu-hint').textContent = 'Не вижу тело целиком — отодвинь камеру';
+            document.getElementById('pu-hint').textContent = 'Не вижу тело — направь камеру на себя';
         }
     } catch(e) {}
     puAnimFrame = requestAnimationFrame(detectPose);
@@ -912,7 +912,7 @@ function processPu(y, thr) {
         }
     } else if (puState === 'bottom') {
         // Вернулся близко к стартовой позиции → засчитан повтор
-        if (Math.abs(delta) < thr * 0.4) {
+        if (Math.abs(delta) < thr * 0.55) {
             puState = 'top';
             puCount++;
             ping(1400);
