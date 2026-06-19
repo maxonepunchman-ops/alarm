@@ -317,7 +317,7 @@ let wlock = null;
 let mathProbs = [], mathIdx = 0, mathInput = '';
 let roomChecked = new Set();
 let puStream = null, puNet = null, puNetLoading = false;
-let puAnimFrame = null, puCount = 0, puState = 'calib', puCalibFrames = 0, puBaseline = null;
+let puAnimFrame = null, puCount = 0, puState = 'calib', puCalibFrames = 0, puBaseline = null, puPeakDelta = 0;
 
 // ── Screens ──
 function show(id) {
@@ -852,27 +852,38 @@ async function detectPose() {
 }
 
 function processPu(kps) {
-    const ls = kps[5], rs = kps[6];
-    if (ls.score < 0.35 || rs.score < 0.35) return;
-    const shoulderY = (ls.position.y + rs.position.y) / 2;
+    // Use nose (kp[0]) — always visible regardless of camera angle
+    const nose = kps[0];
+    if (nose.score < 0.25) return;
+    const y = nose.position.y;
+    const h = document.getElementById('pu-canvas').height || 240;
+    const thr = h * 0.08; // 8% of frame height (~20px) — minimum movement to register
+
     if (puState === 'calib') {
         puCalibFrames++;
-        puBaseline = shoulderY;
-        if (puCalibFrames >= 20) {
+        puBaseline = y; // keep updating to stabilise
+        if (puCalibFrames >= 25) {
             puState = 'up';
-            document.getElementById('pu-status').textContent = 'Опускайся вниз ↓';
-            document.getElementById('pu-hint').textContent = 'Опусти грудь к полу';
+            document.getElementById('pu-status').textContent = 'Отжимайся! ↓↑';
+            document.getElementById('pu-hint').textContent = 'Опусти грудь к полу и подними';
         }
         return;
     }
+
+    const delta = y - puBaseline; // + = head moved down in frame, - = moved up
+
     if (puState === 'up') {
-        if (shoulderY > puBaseline * 1.18) {
+        if (Math.abs(delta) > thr) {
             puState = 'down';
-            document.getElementById('pu-status').textContent = 'Поднимайся вверх ↑';
+            puPeakDelta = delta;
+            document.getElementById('pu-status').textContent = 'Поднимайся! ↑';
         }
     } else if (puState === 'down') {
-        if (shoulderY < puBaseline * 1.07) {
+        if (Math.abs(delta) > Math.abs(puPeakDelta)) puPeakDelta = delta;
+        // rep complete when returned to within 30% of peak displacement
+        if (Math.abs(puPeakDelta) > thr && Math.abs(delta) < Math.abs(puPeakDelta) * 0.3) {
             puState = 'up';
+            puPeakDelta = 0;
             puCount++;
             ping(1400);
             document.getElementById('pu-count').textContent = puCount;
@@ -883,7 +894,7 @@ function processPu(kps) {
                 setTimeout(dismiss, 1400);
                 return;
             }
-            document.getElementById('pu-status').textContent = 'Опускайся вниз ↓';
+            document.getElementById('pu-status').textContent = 'Отжимайся! ↓↑';
         }
     }
 }
