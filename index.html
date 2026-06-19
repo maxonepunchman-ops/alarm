@@ -824,8 +824,9 @@ async function detectPose() {
         const pose = await puNet.estimateSinglePose(vid, { flipHorizontal: true });
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const kps = pose.keypoints;
+        const W = canvas.width, H = canvas.height;
         // Draw bones
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 3;
         for (const [a, b] of PU_BONES) {
             const ka = kps[a], kb = kps[b];
             if (ka.score > 0.3 && kb.score > 0.3) {
@@ -846,55 +847,85 @@ async function detectPose() {
                 ctx.fill();
             }
         }
-        processPu(kps);
+        // ── Tracked vertical position: centroid of torso points (nose, shoulders, hips) ──
+        const TRACK = [0, 5, 6, 11, 12];
+        let sum = 0, cnt = 0;
+        for (const idx of TRACK) { const k = kps[idx]; if (k.score > 0.3) { sum += k.position.y; cnt++; } }
+        const thr = H * 0.07;
+        if (cnt >= 2) {
+            const trackedY = sum / cnt;
+            // Current tracking line (white, thick) — the axis it counts by
+            hLine(ctx, trackedY, W, '#ffffff', 3, false);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('● трек', 8, trackedY - 6);
+            if (puBaseline != null) {
+                // Baseline (green) + trigger zone (red dashed)
+                hLine(ctx, puBaseline, W, '#00e676', 2, true);
+                hLine(ctx, puBaseline + thr, W, '#ff2d5e', 1.5, true);
+                hLine(ctx, puBaseline - thr, W, '#ff2d5e', 1.5, true);
+            }
+            processPu(trackedY, thr);
+        } else {
+            document.getElementById('pu-hint').textContent = 'Не вижу тело целиком — отодвинь камеру';
+        }
     } catch(e) {}
     puAnimFrame = requestAnimationFrame(detectPose);
 }
 
-function processPu(kps) {
-    // Use nose (kp[0]) — always visible regardless of camera angle
-    const nose = kps[0];
-    if (nose.score < 0.25) return;
-    const y = nose.position.y;
-    const h = document.getElementById('pu-canvas').height || 240;
-    const thr = h * 0.08; // 8% of frame height (~20px) — minimum movement to register
+function hLine(ctx, y, w, color, width, dashed) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.setLineDash(dashed ? [8, 6] : []);
+    ctx.moveTo(0, y); ctx.lineTo(w, y);
+    ctx.strokeStyle = color; ctx.lineWidth = width;
+    ctx.stroke();
+    ctx.restore();
+}
+
+function processPu(y, thr) {
+    const statusEl = document.getElementById('pu-status');
+    const hintEl = document.getElementById('pu-hint');
 
     if (puState === 'calib') {
         puCalibFrames++;
-        puBaseline = y; // keep updating to stabilise
+        // Smoothed baseline = your starting (top) position
+        puBaseline = (puBaseline == null) ? y : puBaseline * 0.7 + y * 0.3;
+        const left = Math.max(0, 25 - puCalibFrames);
+        statusEl.textContent = 'Замри в упоре лёжа';
+        hintEl.textContent = 'Калибровка... ' + left;
         if (puCalibFrames >= 25) {
-            puState = 'up';
-            document.getElementById('pu-status').textContent = 'Отжимайся! ↓↑';
-            document.getElementById('pu-hint').textContent = 'Опусти грудь к полу и подними';
+            puState = 'top';
+            statusEl.textContent = 'Опускайся ↓';
         }
         return;
     }
 
-    const delta = y - puBaseline; // + = head moved down in frame, - = moved up
+    const delta = y - puBaseline; // движение относительно стартовой позиции
+    hintEl.textContent = 'движение: ' + Math.round(Math.abs(delta)) + 'px / нужно ' + Math.round(thr);
 
-    if (puState === 'up') {
+    if (puState === 'top') {
+        // Ушёл достаточно далеко от базы (вниз или вверх — неважно)
         if (Math.abs(delta) > thr) {
-            puState = 'down';
-            puPeakDelta = delta;
-            document.getElementById('pu-status').textContent = 'Поднимайся! ↑';
+            puState = 'bottom';
+            statusEl.textContent = 'Поднимайся ↑';
         }
-    } else if (puState === 'down') {
-        if (Math.abs(delta) > Math.abs(puPeakDelta)) puPeakDelta = delta;
-        // rep complete when returned to within 30% of peak displacement
-        if (Math.abs(puPeakDelta) > thr && Math.abs(delta) < Math.abs(puPeakDelta) * 0.3) {
-            puState = 'up';
-            puPeakDelta = 0;
+    } else if (puState === 'bottom') {
+        // Вернулся близко к стартовой позиции → засчитан повтор
+        if (Math.abs(delta) < thr * 0.4) {
+            puState = 'top';
             puCount++;
             ping(1400);
+            if (navigator.vibrate) navigator.vibrate(120);
             document.getElementById('pu-count').textContent = puCount;
             if (puCount >= 15) {
-                document.getElementById('pu-status').textContent = '🎉 Готово!';
-                document.getElementById('pu-hint').textContent = 'Отличная работа!';
+                statusEl.textContent = '🎉 Готово!';
+                hintEl.textContent = 'Отличная работа!';
                 cancelAnimationFrame(puAnimFrame); puAnimFrame = null;
                 setTimeout(dismiss, 1400);
                 return;
             }
-            document.getElementById('pu-status').textContent = 'Отжимайся! ↓↑';
+            statusEl.textContent = 'Опускайся ↓';
         }
     }
 }
