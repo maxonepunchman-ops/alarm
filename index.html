@@ -814,7 +814,7 @@ async function detectPuLoop() {
         if (person) {
             const [bx, by, bw, bh] = person.bbox;
             const centerY = by + bh / 2;
-            const thr = Math.max(bh * 0.08, 18); // 8% of person bbox height, min 18px
+            const thr = Math.max(bh * 0.04, 10); // 4% of person bbox height, min 10px
             // Draw person box
             ctx.strokeStyle = '#00e676'; ctx.lineWidth = 3; ctx.setLineDash([]);
             ctx.strokeRect(bx, by, bw, bh);
