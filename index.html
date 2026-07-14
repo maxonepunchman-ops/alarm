@@ -2,964 +2,664 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="WakeForce">
-    <link rel="manifest" href="manifest.json">
-    <title>WakeForce</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{
-    --bg:#08080f;--s1:#11111e;--s2:#18182a;
-    --or:#ff6b35;--red:#ff2d5e;--blue:#4da6ff;
-    --grn:#00e676;--txt:#e8e8ff;--dim:#5a5a80;--brd:#252540;
-}
-html,body{height:100%;overflow:hidden}
-body{
-    background:var(--bg);color:var(--txt);
-    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;
-    display:flex;align-items:center;justify-content:center;
-    -webkit-user-select:none;user-select:none;
-}
-#app{width:100%;max-width:430px;height:100%;height:-webkit-fill-available;position:relative;overflow:hidden}
-.screen{
-    position:absolute;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;
-    padding:28px 22px;gap:16px;
-    opacity:0;pointer-events:none;transition:opacity 0.22s;
-}
-.screen.active{opacity:1;pointer-events:all}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>H2O Tracker</title>
+    <style>
+        :root {
+            --bg-color: #fafbfc;
+            --text-main: #2e353f;
+            --text-secondary: #8e95a1;
+            --water-color-start: #3b82f6;
+            --water-color-end: #1d4ed8;
+            --glass-rim-color: #2e353f;
+        }
 
-/* ── Buttons ── */
-.btn{
-    width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
-    padding:16px 20px;border-radius:16px;border:none;
-    font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;
-    transition:transform .12s,opacity .12s;letter-spacing:.2px;
-    touch-action:manipulation;-webkit-touch-callout:none;
-}
-.btn:active{transform:scale(.96);opacity:.8}
-.btn-pri{background:linear-gradient(135deg,var(--or),var(--red));color:#fff}
-.btn-sec{background:var(--s2);color:var(--txt);border:1px solid var(--brd)}
-.btn-danger{background:linear-gradient(135deg,#cc0030,#ff0040);color:#fff;font-size:17px;padding:18px;border-radius:18px}
-.btn-blue{background:linear-gradient(135deg,#2255cc,#4488ff);color:#fff;font-size:17px;padding:18px;border-radius:18px}
-.btn-sm{padding:11px;font-size:13px}
-.lbl{width:100%;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);margin-bottom:-6px}
-.warn{width:100%;background:rgba(255,180,0,.08);border:1px solid rgba(255,180,0,.25);border-radius:12px;padding:10px 14px;font-size:12px;color:#ffcc44;text-align:center;line-height:1.5}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
 
-/* ── Welcome ── */
-#screen-welcome{text-align:center;gap:18px}
-.wlc-em{font-size:86px;line-height:1}
-.wlc-ttl{font-size:40px;font-weight:800;background:linear-gradient(135deg,var(--or),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.wlc-sub{color:var(--dim);font-size:14px;line-height:1.6;max-width:280px}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            background: radial-gradient(circle at center, #ffffff 0%, #f1f3f5 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: calc(40px + env(safe-area-inset-top)) 20px calc(30px + env(safe-area-inset-bottom)) 20px;
+            overflow: hidden;
+        }
 
-/* ── Setup ── */
-#screen-setup{justify-content:flex-start;padding-top:50px}
-.cur-time{font-size:50px;font-weight:200;letter-spacing:2px;font-variant-numeric:tabular-nums;text-align:center;width:100%}
-.time-wrap{width:100%;background:var(--s1);border:1px solid var(--brd);border-radius:16px;overflow:hidden}
-#alarm-time{width:100%;background:transparent;border:none;color:var(--txt);font-size:44px;font-weight:300;text-align:center;padding:10px 16px;font-family:inherit;font-variant-numeric:tabular-nums;letter-spacing:2px;-webkit-appearance:none;touch-action:manipulation}
-#alarm-time:focus{outline:none}
-.snd-grid{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.snd-btn{background:var(--s1);border:2px solid var(--brd);border-radius:16px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:inherit;color:var(--txt);transition:all .15s;touch-action:manipulation;-webkit-touch-callout:none}
-.snd-btn:active{transform:scale(.93)}
-.snd-btn.on{border-color:var(--or);background:rgba(255,107,53,.12)}
-.snd-btn .ic{font-size:28px}
-.snd-btn .nm{font-size:12px;font-weight:600;color:var(--dim)}
-.snd-btn.on .nm{color:var(--or)}
+        /* Header Elements */
+        .header {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            justify-content: flex-end;
+            position: absolute;
+            top: calc(20px + env(safe-area-inset-top));
+            right: 25px;
+            z-index: 10;
+        }
 
-/* ── Room ── */
-#screen-room{justify-content:flex-start;padding-top:44px;gap:12px}
-.room-title{font-size:18px;font-weight:700;text-align:center}
-.room-sub{font-size:12px;color:var(--dim);text-align:center}
-.room-scroll{width:100%;overflow-y:auto;max-height:calc(100vh - 200px);display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
-.room-item{
-    width:100%;display:flex;align-items:center;gap:12px;
-    background:var(--s1);border:2px solid var(--brd);border-radius:14px;
-    padding:12px 16px;cursor:pointer;transition:all .15s;
-    touch-action:manipulation;-webkit-touch-callout:none;
-}
-.room-item:active{transform:scale(.98);opacity:.8}
-.room-item.checked{border-color:var(--grn);background:rgba(0,230,118,.08)}
-.room-em{font-size:24px;flex-shrink:0}
-.room-nm{flex:1;font-size:14px;font-weight:500}
-.room-tick{font-size:18px;color:var(--dim)}
-.room-item.checked .room-tick{color:var(--grn)}
+        .settings-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            transition: transform 0.2s ease;
+        }
 
-/* ── Active ── */
-#screen-active{text-align:center;gap:18px}
-.act-check{font-size:58px}
-.act-time{font-size:72px;font-weight:200;font-variant-numeric:tabular-nums;letter-spacing:2px}
-.cd-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
-.cd-lbl{font-size:11px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:1px}
-.countdown{font-size:30px;font-weight:300;font-variant-numeric:tabular-nums;color:var(--blue);letter-spacing:2px}
-.snd-badge{background:var(--s1);border:1px solid var(--brd);border-radius:20px;padding:6px 18px;font-size:14px;color:var(--dim)}
+        .settings-btn:active {
+            transform: rotate(45deg) scale(0.9);
+        }
 
-/* ── Ringing ── */
-#screen-ringing{text-align:center;gap:20px}
-#screen-ringing.rpulse{animation:bgp .9s ease-in-out infinite}
-@keyframes bgp{0%,100%{background:#0f0008}50%{background:#220015}}
-.ring-bell{font-size:100px;display:block;animation:bellshake .45s ease-in-out infinite}
-@keyframes bellshake{0%,100%{transform:rotate(-10deg) scale(1)}50%{transform:rotate(10deg) scale(1.06)}}
-.ring-ttl{font-size:44px;font-weight:900;background:linear-gradient(135deg,#ff4400,#ff005e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px}
-.ring-sub{color:var(--dim);font-size:14px;line-height:1.5}
+        .settings-btn svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--text-main);
+            opacity: 0.85;
+        }
 
-/* ── Scan ── */
-#screen-scan{justify-content:flex-start;padding-top:42px;gap:12px}
-.scan-hdr{font-size:17px;font-weight:700;text-align:center}
-.targets-row{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.tgt{background:var(--s1);border:2px solid var(--brd);border-radius:14px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .3s}
-.tgt.done{border-color:var(--grn);background:rgba(0,230,118,.1)}
-.tgt.cur{border-color:var(--or);background:rgba(255,107,53,.1);animation:tpulse 1s ease-in-out infinite}
-@keyframes tpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,53,.4)}50%{box-shadow:0 0 0 6px rgba(255,107,53,0)}}
-.tgt .tg-em{font-size:26px}
-.tgt .tg-nm{font-size:10px;font-weight:700;color:var(--dim);line-height:1.2}
-.tgt.done .tg-nm{color:var(--grn)}
-.tgt.cur .tg-nm{color:var(--or)}
-.cam-wrap{width:100%;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:4/3;position:relative;border:1px solid var(--brd)}
-#cam-video{width:100%;height:100%;object-fit:cover}
-.cam-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.scan-frame{width:120px;height:120px;border:2.5px solid var(--or);border-radius:16px;animation:framep 1s ease-in-out infinite}
-@keyframes framep{0%,100%{opacity:.35;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}}
-.scan-hint{font-size:13px;color:var(--dim);text-align:center;min-height:18px}
-.scan-row{display:flex;gap:8px;width:100%}
-.sm-btn{background:none;border:1px solid var(--brd);border-radius:10px;color:var(--dim);padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;touch-action:manipulation;flex:1;text-align:center}
-.sm-btn:active{opacity:.6}
+        /* Stats Display */
+        .stats-container {
+            text-align: center;
+            margin-top: 40px;
+            z-index: 2;
+        }
 
-/* ── Math ── */
-#screen-math{justify-content:flex-start;padding-top:48px;gap:14px}
-.math-prog{font-size:13px;color:var(--dim);text-align:center;font-weight:600;letter-spacing:.5px}
-.math-prob{font-size:46px;font-weight:300;text-align:center;letter-spacing:1px}
-.math-ans{font-size:54px;font-weight:200;font-variant-numeric:tabular-nums;letter-spacing:2px;min-height:68px;text-align:center;color:var(--or);border-bottom:2px solid var(--brd);width:100%;padding-bottom:4px}
-.math-ans.wrong{animation:wrongshake .4s ease}
-@keyframes wrongshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
-.numpad{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.np{background:var(--s2);border:1px solid var(--brd);border-radius:16px;padding:18px 0;font-size:24px;font-weight:500;color:var(--txt);cursor:pointer;font-family:inherit;transition:transform .1s,background .1s;touch-action:manipulation;-webkit-touch-callout:none}
-.np:active{transform:scale(.92);background:var(--s1)}
-.np-del{color:var(--dim);font-size:20px}
-.np-ok{background:var(--grn);color:#000;border-color:var(--grn)}
-.np-ok:active{background:#00c060}
-.btn-grn{background:linear-gradient(135deg,#009944,#00cc55);color:#fff;font-size:17px;padding:18px;border-radius:18px}
+        .ml-display {
+            font-size: 76px;
+            font-weight: 800;
+            letter-spacing: -2px;
+            background: linear-gradient(180deg, var(--text-main) 0%, #111827 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+            line-height: 1;
+        }
 
-/* ── Push-ups ── */
-#screen-pushups{justify-content:flex-start;padding-top:28px;gap:10px}
-.pu-hdr{font-size:20px;font-weight:700;text-align:center}
-.pu-count{font-size:72px;font-weight:200;text-align:center;line-height:1;font-variant-numeric:tabular-nums}
-.pu-count .pu-of{font-size:28px;color:var(--dim);font-weight:300}
-.pu-status{font-size:15px;text-align:center;color:var(--or);font-weight:600;min-height:22px}
-.pu-cam-wrap{width:100%;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:4/3;position:relative;border:1px solid var(--brd)}
-#pu-video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
-#pu-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transform:scaleX(-1)}
-.pu-hint{font-size:12px;color:var(--dim);text-align:center;min-height:16px}
-</style>
+        .unit-label {
+            font-size: 38px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-left: 5px;
+            vertical-align: baseline;
+        }
+
+        .percentage-display {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Glass Container & SVG */
+        .glass-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 280px;
+            height: 420px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: auto 0;
+            cursor: pointer;
+        }
+
+        .glass-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.03));
+            transition: transform 0.1s ease;
+        }
+
+        .glass-wrapper:active .glass-svg {
+            transform: scale(0.97);
+        }
+
+        /* Control Panel */
+        .controls {
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 5;
+        }
+
+        .quick-add-row {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .btn-add {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1.5px solid rgba(46, 53, 63, 0.15);
+            padding: 14px 0;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-add:active {
+            background: var(--text-main);
+            color: #ffffff;
+            transform: scale(0.95);
+            border-color: var(--text-main);
+        }
+
+        .goal-indicator {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Settings Slide-up Panel (iOS Style Sheet) */
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .settings-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .settings-sheet {
+            width: 100%;
+            background: #ffffff;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+            padding: 30px 24px calc(40px + env(safe-area-inset-bottom)) 24px;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
+
+        .settings-overlay.active .settings-sheet {
+            transform: translateY(0);
+        }
+
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .sheet-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .sheet-close {
+            background: #f1f3f5;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-weight: bold;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .setting-item {
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .setting-input {
+            width: 100%;
+            background: #f1f3f5;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            outline: none;
+            text-align: center;
+        }
+
+        .btn-danger {
+            width: 100%;
+            background: #fee2e2;
+            color: #ef4444;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-danger:active {
+            background: #fecaca;
+        }
+
+        /* Success Confetti Animation Canvas */
+        #confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 99;
+        }
+    </style>
 </head>
 <body>
-<div id="app">
 
-<!-- WELCOME -->
-<div class="screen active" id="screen-welcome">
-    <div class="wlc-em">⏰</div>
-    <div class="wlc-ttl">WakeForce</div>
-    <div class="wlc-sub">Сканирование предметов или математика — просто так не выключишь</div>
-    <button class="btn btn-pri" style="font-size:18px;padding:20px;border-radius:20px" onclick="initApp()">Начать</button>
-    <div class="warn">⚠️ Не ставьте на беззвучный — уберите переключатель сбоку телефона</div>
-</div>
+    <!-- Confetti for goal completion -->
+    <canvas id="confetti"></canvas>
 
-<!-- SETUP -->
-<div class="screen" id="screen-setup">
-    <div class="cur-time" id="cur-time">00:00:00</div>
-    <div class="lbl">Время будильника</div>
-    <div class="time-wrap"><input type="time" id="alarm-time"></div>
-    <div class="lbl">Звук</div>
-    <div class="snd-grid">
-        <button class="snd-btn on" onclick="pickSnd('siren',this)"><span class="ic">🚨</span><span class="nm">Сирена</span></button>
-        <button class="snd-btn" onclick="pickSnd('birds',this)"><span class="ic">🐦</span><span class="nm">Птицы</span></button>
-        <button class="snd-btn" onclick="pickSnd('horn',this)"><span class="ic">📯</span><span class="nm">Горн</span></button>
+    <!-- Settings Gear -->
+    <div class="header">
+        <button class="settings-btn" id="openSettingsBtn" aria-label="Настройки">
+            <svg viewBox="0 0 24 24">
+                <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+            </svg>
+        </button>
     </div>
-    <button class="btn btn-pri" onclick="setAlarm()">Установить будильник</button>
-    <div style="display:flex;gap:8px;width:100%">
-        <button class="btn btn-sec btn-sm" style="flex:1" onclick="testSnd()">▶ Тест звука</button>
-        <button class="btn btn-sec btn-sm" style="flex:1" onclick="goRoom()">🏠 Предметы</button>
+
+    <!-- Stats Display -->
+    <div class="stats-container">
+        <div>
+            <span class="ml-display" id="waterAmount">0</span>
+            <span class="unit-label">мл</span>
+        </div>
+        <div class="percentage-display" id="percentAmount">0% выпито</div>
     </div>
-</div>
 
-<!-- ROOM SETUP -->
-<div class="screen" id="screen-room">
-    <div class="room-title">Что есть в твоей комнате?</div>
-    <div class="room-sub">Будильник будет просить только эти предметы</div>
-    <div class="room-scroll" id="room-scroll"></div>
-    <button class="btn btn-pri" onclick="saveRoom()">Сохранить</button>
-</div>
+    <!-- Interactive 3D SVG Glass -->
+    <div class="glass-wrapper" id="glassTapArea" onclick="handleGlassTap()">
+        <svg viewBox="0 0 300 500" class="glass-svg">
+            <defs>
+                <!-- Clipping path strictly inside the glass walls -->
+                <clipPath id="water-clip">
+                    <polygon points="43,78 257,78 213,462 87,462" />
+                </clipPath>
+                <!-- Liquid fluid gradient -->
+                <linearGradient id="water-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0.9" />
+                    <stop offset="60%" stop-color="#2563eb" stop-opacity="0.8" />
+                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.7" />
+                </linearGradient>
+                <!-- Glass side glow highlight -->
+                <linearGradient id="glass-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25" />
+                    <stop offset="15%" stop-color="#ffffff" stop-opacity="0.0" />
+                    <stop offset="85%" stop-color="#ffffff" stop-opacity="0.0" />
+                    <stop offset="100%" stop-color="#ffffff" stop-opacity="0.2" />
+                </linearGradient>
+            </defs>
 
-<!-- ACTIVE -->
-<div class="screen" id="screen-active">
-    <div class="act-check">✅</div>
-    <div>
-        <div style="color:var(--dim);font-size:13px;text-align:center;margin-bottom:4px">Будильник на</div>
-        <div class="act-time" id="act-time">00:00</div>
+            <!-- Glass Base Shadow -->
+            <ellipse cx="150" cy="470" rx="72" ry="12" fill="rgba(0,0,0,0.04)" />
+
+            <!-- Glass Background Fill -->
+            <polygon points="45,80 255,80 215,460 85,460" fill="rgba(255, 255, 255, 0.45)" />
+
+            <!-- Liquid Render Block (Clipped inside the glass structure) -->
+            <g clip-path="url(#water-clip)">
+                <!-- Main Rising Liquid Block -->
+                <rect id="water-fill" x="0" y="462" width="300" height="384" fill="url(#water-grad)" style="transition: y 0.8s cubic-bezier(0.25, 1, 0.5, 1);" />
+                
+                <!-- 3D Liquid Surface Ellipse (Moves vertically with the fill) -->
+                <ellipse id="water-surface" cx="150" cy="462" rx="65" ry="8" fill="#60a5fa" opacity="0.9" style="transition: cy 0.8s cubic-bezier(0.25, 1, 0.5, 1), rx 0.8s cubic-bezier(0.25, 1, 0.5, 1), ry 0.8s cubic-bezier(0.25, 1, 0.5, 1);" />
+            </g>
+
+            <!-- Back Rim of the Glass (Provides depth) -->
+            <path d="M 45,80 A 105,12 0 0 1 255,80" fill="none" stroke="rgba(46, 53, 63, 0.15)" stroke-width="1.5" />
+
+            <!-- Thick Realistic Glass Outline -->
+            <!-- Left border -->
+            <line x1="45" y1="80" x2="85" y2="460" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+            <!-- Right border -->
+            <line x1="255" y1="80" x2="215" y2="460" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+            <!-- Bottom Rim Ellipse -->
+            <ellipse cx="150" cy="460" rx="65" ry="8" fill="none" stroke="var(--text-main)" stroke-width="3.5" opacity="0.85" />
+            <!-- Front Top Rim Ellipse -->
+            <path d="M 45,80 A 105,12 0 0 0 255,80" fill="none" stroke="var(--text-main)" stroke-width="3" opacity="0.85" />
+
+            <!-- Glossy Highlight Overlay -->
+            <polygon points="48,83 252,83 213,457 87,457" fill="url(#glass-glow)" pointer-events="none" />
+        </svg>
     </div>
-    <div class="cd-wrap">
-        <div class="cd-lbl">Осталось</div>
-        <div class="countdown" id="countdown">00:00:00</div>
+
+    <!-- Native Feel Control Dashboard -->
+    <div class="controls">
+        <div class="quick-add-row">
+            <button class="btn-add" onclick="addWater(150)">+ 150 мл</button>
+            <button class="btn-add" onclick="addWater(250)">+ 250 мл</button>
+            <button class="btn-add" onclick="addWater(500)">+ 500 мл</button>
+        </div>
+        <div class="goal-indicator" id="goalStatus">Цель: 2000 мл</div>
     </div>
-    <div class="snd-badge" id="snd-badge">🚨 Сирена</div>
-    <div class="warn">⚠️ Держите экран включённым — приложение должно быть открыто</div>
-    <button class="btn btn-sec btn-sm" onclick="cancelAlarm()">✕ Отменить будильник</button>
-</div>
 
-<!-- RINGING -->
-<div class="screen" id="screen-ringing">
-    <span class="ring-bell">⏰</span>
-    <div class="ring-ttl">ПОДЪЁМ!</div>
-    <div class="ring-sub">Выберите способ выключить:</div>
-    <button class="btn btn-danger" onclick="goScan()">📷 Сканировать 3 предмета</button>
-    <button class="btn btn-blue" onclick="goMath()">🧮 Решить 3 примера</button>
-    <button class="btn btn-grn" onclick="goPushups()">💪 15 отжиманий</button>
-</div>
+    <!-- IOS Style Settings Drawer Sheet -->
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-sheet">
+            <div class="sheet-header">
+                <span class="sheet-title">Настройки</span>
+                <button class="sheet-close" id="closeSettingsBtn">&times;</button>
+            </div>
+            
+            <div class="setting-item">
+                <label class="setting-label" for="dailyGoalInput">Дневная цель (мл)</label>
+                <input type="number" id="dailyGoalInput" class="setting-input" min="500" max="10000" step="50">
+            </div>
 
-<!-- PUSHUPS -->
-<div class="screen" id="screen-pushups">
-    <div class="pu-hdr">💪 Отжимания</div>
-    <div class="pu-count"><span id="pu-count">0</span><span class="pu-of">/15</span></div>
-    <div class="pu-status" id="pu-status">Встань в упор лёжа</div>
-    <div class="pu-cam-wrap">
-        <video id="pu-video" playsinline autoplay muted></video>
-        <canvas id="pu-canvas"></canvas>
+            <div class="setting-item" style="margin-top: 30px;">
+                <button class="btn-danger" onclick="resetApp()">Сбросить прогресс</button>
+            </div>
+        </div>
     </div>
-    <div class="pu-hint" id="pu-hint">Загрузка камеры...</div>
-    <button class="sm-btn" onclick="backToRingFromPu()">← Назад</button>
-</div>
 
-<!-- SCAN -->
-<div class="screen" id="screen-scan">
-    <div class="scan-hdr">Найди и покажи камерой:</div>
-    <div class="targets-row">
-        <div class="tgt" id="tgt-0"><div class="tg-em">?</div><div class="tg-nm">—</div></div>
-        <div class="tgt" id="tgt-1"><div class="tg-em">?</div><div class="tg-nm">—</div></div>
-        <div class="tgt" id="tgt-2"><div class="tg-em">?</div><div class="tg-nm">—</div></div>
-    </div>
-    <div class="cam-wrap">
-        <video id="cam-video" playsinline autoplay muted></video>
-        <div class="cam-ov"><div class="scan-frame"></div></div>
-    </div>
-    <div class="scan-hint" id="scan-hint">Загрузка...</div>
-    <div class="scan-row">
-        <button class="sm-btn" onclick="reshuffleTgts()">🔀 Другие предметы</button>
-        <button class="sm-btn" onclick="backToRing()">← Назад</button>
-    </div>
-</div>
+    <script>
+        // State variables
+        let currentWater = 0;
+        let dailyGoal = 2000;
+        let confettiActive = false;
 
-<!-- MATH -->
-<div class="screen" id="screen-math">
-    <div class="math-prog" id="math-prog">Пример 1 / 3</div>
-    <div class="math-prob" id="math-prob">— + — = ?</div>
-    <div class="math-ans" id="math-ans">—</div>
-    <div class="numpad">
-        <button class="np" onclick="np('1')">1</button>
-        <button class="np" onclick="np('2')">2</button>
-        <button class="np" onclick="np('3')">3</button>
-        <button class="np" onclick="np('4')">4</button>
-        <button class="np" onclick="np('5')">5</button>
-        <button class="np" onclick="np('6')">6</button>
-        <button class="np" onclick="np('7')">7</button>
-        <button class="np" onclick="np('8')">8</button>
-        <button class="np" onclick="np('9')">9</button>
-        <button class="np np-del" onclick="np('←')">⌫</button>
-        <button class="np" onclick="np('0')">0</button>
-        <button class="np np-ok" onclick="np('✓')">✓</button>
-    </div>
-    <button class="btn btn-sec btn-sm" onclick="backToRing()">← Назад</button>
-</div>
+        // Elements
+        const waterAmountEl = document.getElementById('waterAmount');
+        const percentAmountEl = document.getElementById('percentAmount');
+        const goalStatusEl = document.getElementById('goalStatus');
+        const waterFill = document.getElementById('water-fill');
+        const waterSurface = document.getElementById('water-surface');
+        
+        // Settings elements
+        const settingsOverlay = document.getElementById('settingsOverlay');
+        const openSettingsBtn = document.getElementById('openSettingsBtn');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const dailyGoalInput = document.getElementById('dailyGoalInput');
 
-</div>
-<script>
-// ================================================================
-//  WakeForce v3
-// ================================================================
+        // Confetti Canvas setup
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        let confettiParticles = [];
 
-const POOL = [
-    {cls:'chair',     ru:'Стул',       em:'🪑'},
-    {cls:'couch',     ru:'Диван',       em:'🛋️'},
-    {cls:'bed',       ru:'Кровать',     em:'🛏️'},
-    {cls:'dining table',ru:'Стол',     em:'🪵'},
-    {cls:'laptop',    ru:'Ноутбук',    em:'💻'},
-    {cls:'cell phone',ru:'Телефон',    em:'📱'},
-    {cls:'book',      ru:'Книга',      em:'📚'},
-    {cls:'bottle',    ru:'Бутылка',    em:'🍶'},
-    {cls:'cup',       ru:'Кружка',     em:'☕'},
-    {cls:'remote',    ru:'Пульт',      em:'📡'},
-    {cls:'keyboard',  ru:'Клавиатура', em:'⌨️'},
-    {cls:'tvmonitor', ru:'Телевизор',  em:'📺'},
-    {cls:'clock',     ru:'Часы',       em:'🕐'},
-    {cls:'potted plant',ru:'Растение', em:'🌿'},
-    {cls:'backpack',  ru:'Рюкзак',     em:'🎒'},
-    {cls:'mouse',     ru:'Мышь (ком.)',em:'🖱️'},
-    {cls:'vase',      ru:'Ваза',       em:'🏺'},
-    {cls:'umbrella',  ru:'Зонт',       em:'☂️'},
-    {cls:'scissors',  ru:'Ножницы',    em:'✂️'},
-    {cls:'bowl',      ru:'Миска',      em:'🥣'},
-];
-
-const SNAMES = {siren:'🚨 Сирена', birds:'🐦 Птицы', horn:'📯 Горн'};
-const ROOM_KEY = 'wf_room_v1';
-
-// ── State ──
-let sndType = 'siren';
-let alarmAudios = {};       // {siren, birds, horn} — <audio> elements
-let preAlarmAudio = null;   // Nearly-silent looping audio — keeps iOS JS alive
-let actx = null;            // Web Audio only for ping
-let alarmAt = null;
-let checkTmr = null;
-let targets = [];
-let tfModel = null, tfLoading = false;
-let camStream = null, detectTmr = null;
-let wlock = null;
-let mathProbs = [], mathIdx = 0, mathInput = '';
-let roomChecked = new Set();
-let puStream = null, puNet = null, puNetLoading = false;
-let puAnimFrame = null, puCount = 0, puState = 'calib', puCalibFrames = 0, puBaseline = null, puPeakDelta = 0;
-
-// ── Screens ──
-function show(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById('screen-' + id).classList.add('active');
-}
-
-// ================================================================
-//  WAV AUDIO — works on iOS regardless of silent switch
-//  (Audio element plays through media volume, not ringer)
-// ================================================================
-function mkWav(samples, sr) {
-    const n = samples.length;
-    const buf = new ArrayBuffer(44 + n * 2);
-    const v = new DataView(buf);
-    const ws = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
-    ws(0,'RIFF'); v.setUint32(4, 36 + n * 2, true); ws(8,'WAVE');
-    ws(12,'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
-    ws(36,'data'); v.setUint32(40, n * 2, true);
-    for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.round(Math.max(-1, Math.min(1, samples[i])) * 32767), true);
-    return new Blob([buf], {type:'audio/wav'});
-}
-
-function genSilentKeepAlive(sr) {
-    // 1 Hz sine at 0.001 amplitude — inaudible but "real" audio.
-    // iOS keeps the JS timer alive while an <audio> element is playing.
-    const n = sr * 3;
-    const s = new Float32Array(n);
-    for (let i = 0; i < n; i++) s[i] = Math.sin(2 * Math.PI * i / sr) * 0.001;
-    return mkWav(s, sr);
-}
-
-function genSiren(sr) {
-    const n = Math.round(sr * 1.7);
-    const s = new Float32Array(n);
-    let ph = 0;
-    for (let i = 0; i < n; i++) {
-        const t = i / sr, prog = t / 1.7;
-        const freq = 560 + 580 * Math.sin(Math.PI * prog);
-        s[i] = (Math.sin(ph) * 0.55 + Math.sin(ph * 0.499) * 0.3) * 0.85;
-        ph += 2 * Math.PI * freq / sr;
-    }
-    return mkWav(s, sr);
-}
-
-function genBirds(sr) {
-    const dur = 2.4, n = Math.round(sr * dur);
-    const s = new Float32Array(n);
-    const chirps = [
-        {t:.08,f:2100,d:.09},{t:.2,f:2300,d:.08},{t:.32,f:1950,d:.09},
-        {t:.5,f:1750,d:.09},{t:.62,f:1950,d:.09},{t:.74,f:2100,d:.08},
-        {t:.92,f:2500,d:.08},{t:1.02,f:2700,d:.07},{t:1.12,f:2400,d:.08},
-        {t:1.3,f:1900,d:.09},{t:1.42,f:2100,d:.09},{t:1.54,f:1800,d:.08},
-        {t:1.72,f:2200,d:.08},{t:1.84,f:2400,d:.07},{t:1.96,f:2100,d:.08},
-        {t:2.12,f:2900,d:.07},{t:2.22,f:3100,d:.06},{t:2.32,f:2700,d:.07},
-    ];
-    for (const c of chirps) {
-        const st = Math.round(c.t * sr), en = Math.round((c.t + c.d) * sr);
-        let ph = 0;
-        for (let i = st; i < en && i < n; i++) {
-            const p = (i - st) / (en - st);
-            s[i] += Math.sin(ph) * 0.5 * Math.sin(Math.PI * p);
-            ph += 2 * Math.PI * c.f / sr;
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-    }
-    return mkWav(s, sr);
-}
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-function genHorn(sr) {
-    const n = Math.round(sr * 1.0);
-    const s = new Float32Array(n);
-    const freqs = [[220,.38],[660,.19],[1100,.11],[1540,.07]];
-    const phs = freqs.map(() => 0);
-    for (let i = 0; i < n; i++) {
-        const t = i / sr;
-        const env = t < .05 ? t / .05 : (t > .75 ? Math.max(0, 1 - (t - .75) / .25) : 1);
-        let v = 0;
-        for (let j = 0; j < freqs.length; j++) {
-            v += Math.sin(phs[j]) * freqs[j][1];
-            phs[j] += 2 * Math.PI * freqs[j][0] / sr;
-        }
-        s[i] = Math.tanh(v * 2.2) * env * 0.75;
-    }
-    return mkWav(s, sr);
-}
-
-async function initSounds() {
-    const sr = 22050;
-    const gens = { siren: genSiren(sr), birds: genBirds(sr), horn: genHorn(sr) };
-    for (const [k, blob] of Object.entries(gens)) {
-        const a = new Audio(URL.createObjectURL(blob));
-        a.loop = true;
-        a.volume = 1;
-        alarmAudios[k] = a;
-        // Prime audio element on user gesture so iOS allows later play()
-        try { await a.play(); a.pause(); a.currentTime = 0; } catch(e) {}
-    }
-    // Silent keepalive — prime it on user gesture so later play() works
-    preAlarmAudio = new Audio(URL.createObjectURL(genSilentKeepAlive(sr)));
-    preAlarmAudio.loop = true;
-    try { await preAlarmAudio.play(); preAlarmAudio.pause(); preAlarmAudio.currentTime = 0; } catch(e) {}
-}
-
-function startPreAlarm() {
-    if (!preAlarmAudio) return;
-    preAlarmAudio.currentTime = 0;
-    preAlarmAudio.play().catch(() => {});
-    if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-            title: 'WakeForce', artist: 'Будильник активен', album: 'Таймер работает'
-        });
-        navigator.mediaSession.setActionHandler('play', () => preAlarmAudio.play().catch(() => {}));
-        navigator.mediaSession.setActionHandler('pause', () => {});
-    }
-}
-function stopPreAlarm() {
-    if (!preAlarmAudio) return;
-    try { preAlarmAudio.pause(); preAlarmAudio.currentTime = 0; } catch(e) {}
-}
-
-function playAlarm() {
-    const a = alarmAudios[sndType];
-    if (!a) return;
-    a.currentTime = 0;
-    a.play().catch(() => {
-        // Retry once
-        setTimeout(() => a.play().catch(() => {}), 300);
-    });
-}
-
-function stopAlarmAudio() {
-    for (const a of Object.values(alarmAudios)) {
-        try { a.pause(); a.currentTime = 0; } catch(e) {}
-    }
-}
-
-// ── Ping (Web Audio — triggered by user tap, so gesture OK) ──
-async function ensurePingCtx() {
-    if (actx) return;
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    actx = new Ctx();
-    if (actx.state === 'suspended') await actx.resume();
-}
-
-function ping(freq = 1300) {
-    if (!actx) return;
-    try {
-        const o = actx.createOscillator(), g = actx.createGain();
-        o.connect(g); g.connect(actx.destination);
-        o.type = 'sine';
-        o.frequency.setValueAtTime(freq, actx.currentTime);
-        o.frequency.linearRampToValueAtTime(freq * 1.4, actx.currentTime + .08);
-        g.gain.setValueAtTime(.4, actx.currentTime);
-        g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + .35);
-        o.start(); o.stop(actx.currentTime + .35);
-    } catch(e) {}
-}
-
-// ── Wake Lock ──
-async function grabWakeLock() {
-    try { if ('wakeLock' in navigator) wlock = await navigator.wakeLock.request('screen'); } catch(e) {}
-}
-function dropWakeLock() { if (wlock) { wlock.release().catch(() => {}); wlock = null; } }
-
-// ── Clock ──
-function pad(n) { return String(n).padStart(2, '0'); }
-function tickClock() {
-    const d = new Date(), el = document.getElementById('cur-time');
-    if (el) el.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-setInterval(tickClock, 1000); tickClock();
-
-// ── Sound selector ──
-function pickSnd(type, btn) {
-    sndType = type;
-    document.querySelectorAll('.snd-btn').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
-}
-
-async function testSnd() {
-    playAlarm();
-    setTimeout(stopAlarmAudio, 3000);
-}
-
-// ── Room objects ──
-function loadRoom() {
-    try {
-        const s = localStorage.getItem(ROOM_KEY);
-        return s ? new Set(JSON.parse(s)) : new Set(POOL.map(p => p.cls));
-    } catch(e) { return new Set(POOL.map(p => p.cls)); }
-}
-
-function goRoom() {
-    roomChecked = loadRoom();
-    const scroll = document.getElementById('room-scroll');
-    scroll.innerHTML = '';
-    for (const item of POOL) {
-        const div = document.createElement('div');
-        div.className = 'room-item' + (roomChecked.has(item.cls) ? ' checked' : '');
-        div.innerHTML = `<span class="room-em">${item.em}</span><span class="room-nm">${item.ru}</span><span class="room-tick">${roomChecked.has(item.cls) ? '✓' : '○'}</span>`;
-        div.onclick = () => {
-            if (roomChecked.has(item.cls)) { roomChecked.delete(item.cls); div.classList.remove('checked'); div.querySelector('.room-tick').textContent = '○'; }
-            else { roomChecked.add(item.cls); div.classList.add('checked'); div.querySelector('.room-tick').textContent = '✓'; }
-        };
-        scroll.appendChild(div);
-    }
-    show('room');
-}
-
-function saveRoom() {
-    if (roomChecked.size < 3) { alert('Отметьте минимум 3 предмета'); return; }
-    try { localStorage.setItem(ROOM_KEY, JSON.stringify([...roomChecked])); } catch(e) {}
-    show('setup');
-}
-
-// ── Alarm ──
-function setAlarm() {
-    const inp = document.getElementById('alarm-time');
-    if (!inp.value) { alert('Выберите время'); return; }
-    const [h, m] = inp.value.split(':').map(Number);
-    const t = new Date(); t.setHours(h, m, 0, 0);
-    if (t <= new Date()) t.setDate(t.getDate() + 1);
-    alarmAt = t;
-    document.getElementById('act-time').textContent = `${pad(h)}:${pad(m)}`;
-    document.getElementById('snd-badge').textContent = SNAMES[sndType];
-    if (checkTmr) clearInterval(checkTmr);
-    checkTmr = setInterval(checkAlarm, 1000);
-    preloadModel();
-    grabWakeLock();
-    startPreAlarm(); // Start inaudible audio → keeps iOS JS alive on lock screen
-    show('active');
-}
-
-function cancelAlarm() {
-    if (checkTmr) { clearInterval(checkTmr); checkTmr = null; }
-    stopAlarmAudio(); stopPreAlarm(); alarmAt = null; dropWakeLock(); show('setup');
-}
-
-function checkAlarm() {
-    if (!alarmAt) return;
-    if (new Date() >= alarmAt) {
-        clearInterval(checkTmr); checkTmr = null;
-        fireAlarm();
-    } else {
-        const diff = alarmAt - Date.now();
-        const h = Math.floor(diff / 3600000), mn = Math.floor(diff % 3600000 / 60000), s = Math.floor(diff % 60000 / 1000);
-        const el = document.getElementById('countdown');
-        if (el) el.textContent = `${pad(h)}:${pad(mn)}:${pad(s)}`;
-    }
-}
-
-function fireAlarm() {
-    stopPreAlarm();
-    playAlarm();
-    if (navigator.vibrate) navigator.vibrate([700, 150, 700, 150, 700, 150, 700]);
-    grabWakeLock();
-    pickTargets();
-    document.getElementById('screen-ringing').classList.add('rpulse');
-    show('ringing');
-}
-
-function dismiss() {
-    stopAlarmAudio();
-    stopPreAlarm();
-    stopCam();
-    stopPuCam();
-    dropWakeLock();
-    document.getElementById('screen-ringing').classList.remove('rpulse');
-    if (navigator.vibrate) navigator.vibrate(0);
-    alarmAt = null;
-    show('setup');
-}
-
-// ── Targets ──
-function pickTargets() {
-    const room = loadRoom();
-    const avail = POOL.filter(p => room.has(p.cls));
-    const pool = avail.length >= 3 ? avail : POOL;
-    const shuffled = [...pool].sort(() => Math.random() - .5);
-    targets = shuffled.slice(0, 3).map(t => ({...t, done: false}));
-}
-
-function renderTargets() {
-    const firstPending = targets.findIndex(t => !t.done);
-    targets.forEach((t, i) => {
-        const el = document.getElementById('tgt-' + i);
-        el.querySelector('.tg-em').textContent = t.done ? '✅' : t.em;
-        el.querySelector('.tg-nm').textContent = t.ru;
-        el.classList.toggle('done', t.done);
-        el.classList.toggle('cur', !t.done && i === firstPending);
-    });
-}
-
-function reshuffleTgts() { stopCam(); pickTargets(); renderTargets(); setTimeout(startCam, 200); }
-
-// ── Scan ──
-async function goScan() {
-    renderTargets();
-    document.getElementById('scan-hint').textContent = 'Загрузка камеры...';
-    show('scan');
-    await startCam();
-}
-
-async function startCam() {
-    try {
-        camStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: {ideal:'environment'}, width:{ideal:640}, height:{ideal:480} },
-            audio: false
-        });
-        const vid = document.getElementById('cam-video');
-        vid.srcObject = camStream;
-        await vid.play();
-
-        if (!tfModel) {
-            document.getElementById('scan-hint').textContent = 'Загрузка AI (~8 МБ)...';
-            await preloadModel();
+        // Load saved state on start
+        function loadState() {
+            const today = new Date().toDateString();
+            const savedDate = localStorage.getItem('h2o_date');
+            
+            // Auto reset if new day
+            if (savedDate !== today) {
+                localStorage.setItem('h2o_date', today);
+                currentWater = 0;
+                localStorage.setItem('h2o_current', '0');
+            } else {
+                currentWater = parseInt(localStorage.getItem('h2o_current')) || 0;
+            }
+            
+            dailyGoal = parseInt(localStorage.getItem('h2o_goal')) || 2000;
+            dailyGoalInput.value = dailyGoal;
+            
+            updateUI(false);
         }
 
-        if (!tfModel) {
-            document.getElementById('scan-hint').textContent = '❌ AI не загрузился. Используй Математику или нажми "Другие предметы".';
-            return;
+        // Save active state to localStorage
+        function saveState() {
+            localStorage.setItem('h2o_current', currentWater.toString());
+            localStorage.setItem('h2o_goal', dailyGoal.toString());
+            localStorage.setItem('h2o_date', new Date().toDateString());
         }
 
-        updateHint();
-
-        const off = document.createElement('canvas');
-        off.width = 320; off.height = 240;
-        const oc = off.getContext('2d');
-
-        detectTmr = setInterval(async () => {
-            const vid = document.getElementById('cam-video');
-            if (!vid || vid.readyState < 2 || !tfModel) return;
+        // Procedural iOS Haptic Wave Sound Synthesis (Web Audio API)
+        function playWaterBubbleSound() {
             try {
-                oc.drawImage(vid, 0, 0, 320, 240);
-                const preds = await tfModel.detect(off);
-                for (const p of preds) {
-                    if (p.score < 0.5) continue;
-                    const tgt = targets.find(t => !t.done && t.cls === p.class);
-                    if (tgt) {
-                        tgt.done = true;
-                        ping(1400);
-                        renderTargets();
-                        if (targets.every(t => t.done)) {
-                            clearInterval(detectTmr); detectTmr = null;
-                            document.getElementById('scan-hint').textContent = '🎉 Все найдены! Выключаем...';
-                            setTimeout(dismiss, 1400);
-                        } else {
-                            updateHint();
-                        }
-                        break;
-                    }
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const audioCtx = new AudioContext();
+                
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                
+                // Low water splash bubble sound effect (frequency sweep up)
+                const pitchStart = 160 + Math.random() * 40;
+                const pitchEnd = 380 + Math.random() * 80;
+                
+                osc.frequency.setValueAtTime(pitchStart, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(pitchEnd, audioCtx.currentTime + 0.18);
+                
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } catch (e) {
+                console.log("Audio contextual block: user interaction needed.");
+            }
+        }
+
+        // Main animation & UI update engine
+        function updateUI(shouldPlaySound = true) {
+            if (shouldPlaySound) playWaterBubbleSound();
+
+            // Calculate percentage
+            const percentage = Math.min(Math.round((currentWater / dailyGoal) * 100), 100);
+            
+            // Animate number counting smoothly
+            animateCounter('waterAmount', parseInt(waterAmountEl.innerText) || 0, currentWater);
+            percentAmountEl.innerText = `${percentage}% выпито`;
+            goalStatusEl.innerText = `Цель: ${dailyGoal} мл`;
+
+            // SVG Water coordinates calculation
+            const bottomY = 462;
+            const topY = 85;
+            const liquidRange = bottomY - topY;
+            
+            // Percent fluid volume height
+            const fillFactor = Math.min(currentWater / dailyGoal, 1.0);
+            const targetY = bottomY - (fillFactor * liquidRange);
+            
+            // Move liquid volume upward
+            waterFill.setAttribute('y', targetY.toString());
+            
+            // Move 3D Liquid Surface Ellipse
+            waterSurface.setAttribute('cy', targetY.toString());
+            
+            // Dynamically scale ellipse width based on glass tapering
+            const bottomRx = 65;
+            const topRx = 105;
+            const targetRx = bottomRx + (fillFactor * (topRx - bottomRx));
+            waterSurface.setAttribute('rx', targetRx.toString());
+
+            // Tapered Ellipse vertical radius (perspective depth)
+            const bottomRy = 8;
+            const topRy = 12;
+            const targetRy = bottomRy + (fillFactor * (topRy - bottomRy));
+            waterSurface.setAttribute('ry', targetRy.toString());
+
+            // Check and trigger goal complete
+            if (currentWater >= dailyGoal && !confettiActive) {
+                triggerConfetti();
+            }
+        }
+
+        // Standard dynamic counter increment
+        function animateCounter(elementId, start, end) {
+            const obj = document.getElementById(elementId);
+            const range = end - start;
+            if (range === 0) return;
+            
+            const duration = 800; // ms
+            let startTime = null;
+
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                // Ease Out Quad formula
+                const easeProgress = progress * (2 - progress);
+                obj.innerText = Math.floor(start + easeProgress * range);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerText = end;
                 }
-            } catch(e) {}
-        }, 600);
-
-    } catch(e) {
-        document.getElementById('scan-hint').textContent = '❌ Нет доступа к камере';
-    }
-}
-
-function updateHint() {
-    const next = targets.find(t => !t.done);
-    if (next) document.getElementById('scan-hint').textContent = `Ищем: ${next.em} ${next.ru}`;
-}
-
-function stopCam() {
-    if (detectTmr) { clearInterval(detectTmr); detectTmr = null; }
-    if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
-}
-
-function backToRing() { stopCam(); show('ringing'); }
-
-// ── TF.js ──
-function loadScript(src) {
-    return new Promise((ok, fail) => {
-        if (document.querySelector(`script[src="${src}"]`)) { ok(); return; }
-        const s = document.createElement('script');
-        s.src = src; s.onload = ok; s.onerror = fail;
-        document.head.appendChild(s);
-    });
-}
-
-async function preloadModel() {
-    if (tfModel || tfLoading) return;
-    tfLoading = true;
-    try {
-        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
-        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
-        tfModel = await window.cocoSsd.load({ base: 'lite_mobilenet_v2' });
-    } catch(e) { console.warn('TF fail:', e); }
-    tfLoading = false;
-}
-
-// ── Math ──
-function genProb(lvl) {
-    if (lvl === 0) { const a = 15 + Math.floor(Math.random()*45), b = 10 + Math.floor(Math.random()*35); return {txt:`${a} + ${b}`, ans:a+b}; }
-    if (lvl === 1) { const a = 40 + Math.floor(Math.random()*55), b = 10 + Math.floor(Math.random()*30); return {txt:`${a} − ${b}`, ans:a-b}; }
-    const a = 3 + Math.floor(Math.random()*9), b = 3 + Math.floor(Math.random()*11); return {txt:`${a} × ${b}`, ans:a*b};
-}
-
-function goMath() {
-    mathProbs = [genProb(0), genProb(1), genProb(2)];
-    mathIdx = 0; mathInput = '';
-    renderMath(); show('math');
-}
-
-function renderMath() {
-    document.getElementById('math-prog').textContent = `Пример ${mathIdx + 1} / 3`;
-    document.getElementById('math-prob').textContent = mathProbs[mathIdx].txt + ' = ?';
-    document.getElementById('math-ans').textContent = mathInput || '—';
-}
-
-function np(v) {
-    const el = document.getElementById('math-ans');
-    if (v === '←') {
-        mathInput = mathInput.slice(0, -1);
-        el.textContent = mathInput || '—';
-    } else if (v === '✓') {
-        if (!mathInput) return;
-        if (parseInt(mathInput) === mathProbs[mathIdx].ans) {
-            ping(1600);
-            mathIdx++;
-            mathInput = '';
-            if (mathIdx >= 3) {
-                document.getElementById('math-prog').textContent = '🎉 Всё правильно!';
-                document.getElementById('math-prob').textContent = '';
-                el.textContent = '✅';
-                setTimeout(dismiss, 1300);
-            } else { renderMath(); }
-        } else {
-            ping(300);
-            el.classList.remove('wrong');
-            void el.offsetWidth;
-            el.classList.add('wrong');
-            setTimeout(() => { el.classList.remove('wrong'); mathInput = ''; el.textContent = '—'; }, 500);
+            }
+            window.requestAnimationFrame(step);
         }
-    } else {
-        if (mathInput.length < 5) { mathInput += v; el.textContent = mathInput; }
-    }
-}
 
-// ── Push-ups ──
-async function goPushups() {
-    puCount = 0; puState = 'calib'; puCalibFrames = 0; puBaseline = null;
-    document.getElementById('pu-count').textContent = '0';
-    document.getElementById('pu-status').textContent = 'Встань в упор лёжа';
-    document.getElementById('pu-hint').textContent = 'Загрузка камеры...';
-    show('pushups');
-    await startPuCam();
-}
+        // Interface events
+        function addWater(amount) {
+            currentWater += amount;
+            saveState();
+            updateUI(true);
+        }
 
-async function startPuCam() {
-    try {
-        puStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user', width:{ideal:640}, height:{ideal:480} },
-            audio: false
+        function handleGlassTap() {
+            addWater(250);
+        }
+
+        function resetApp() {
+            if (confirm("Вы уверены, что хотите обнулить счетчик воды на сегодня?")) {
+                currentWater = 0;
+                saveState();
+                updateUI(false);
+                closeSettings();
+            }
+        }
+
+        // Settings Sheet handlers
+        openSettingsBtn.addEventListener('click', () => {
+            settingsOverlay.classList.add('active');
         });
-        const vid = document.getElementById('pu-video');
-        vid.srcObject = puStream;
-        await vid.play();
-        if (!puNet) {
-            document.getElementById('pu-hint').textContent = 'Загрузка PoseNet (~3 МБ)...';
-            await loadPuNet();
-        }
-        if (!puNet) {
-            document.getElementById('pu-hint').textContent = '❌ PoseNet не загрузился. Попробуй другой способ.';
-            return;
-        }
-        document.getElementById('pu-hint').textContent = 'Калибровка позы...';
-        detectPose();
-    } catch(e) {
-        document.getElementById('pu-hint').textContent = '❌ Нет доступа к камере';
-    }
-}
 
-async function loadPuNet() {
-    if (puNet || puNetLoading) return;
-    puNetLoading = true;
-    try {
-        if (!window.tf) {
-            await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
+        closeSettingsBtn.addEventListener('click', closeSettings);
+        settingsOverlay.addEventListener('click', (e) => {
+            if (e.target === settingsOverlay) closeSettings();
+        });
+
+        function closeSettings() {
+            settingsOverlay.classList.remove('active');
+            
+            // Validate and save new goal
+            let val = parseInt(dailyGoalInput.value);
+            if (isNaN(val) || val < 500) val = 2000;
+            if (val > 10000) val = 10000;
+            
+            dailyGoal = val;
+            dailyGoalInput.value = val;
+            saveState();
+            updateUI(false);
         }
-        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@2.2.2/dist/posenet.min.js');
-        puNet = await window.posenet.load({ architecture: 'MobileNetV1', outputStride: 16, multiplier: 0.5 });
-    } catch(e) { console.warn('PoseNet fail:', e); }
-    puNetLoading = false;
-}
 
-const PU_BONES = [[5,6],[5,7],[7,9],[6,8],[8,10],[5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16]];
+        // Particle Class for Celebratory Confetti Splash
+        class ConfettiParticle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height - canvas.height;
+                this.size = Math.random() * 8 + 6;
+                this.color = `hsl(${Math.random() * 360}, 80%, 60%)`;
+                this.speedX = Math.random() * 4 - 2;
+                this.speedY = Math.random() * 5 + 4;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 10 - 5;
+            }
 
-async function detectPose() {
-    const vid = document.getElementById('pu-video');
-    const canvas = document.getElementById('pu-canvas');
-    if (!vid || !canvas || !puNet || vid.readyState < 2) {
-        puAnimFrame = requestAnimationFrame(detectPose);
-        return;
-    }
-    canvas.width = vid.videoWidth || 320;
-    canvas.height = vid.videoHeight || 240;
-    const ctx = canvas.getContext('2d');
-    try {
-        const pose = await puNet.estimateSinglePose(vid, { flipHorizontal: true });
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const kps = pose.keypoints;
-        const W = canvas.width, H = canvas.height;
-        // Draw bones
-        ctx.lineWidth = 3;
-        for (const [a, b] of PU_BONES) {
-            const ka = kps[a], kb = kps[b];
-            if (ka.score > 0.3 && kb.score > 0.3) {
-                ctx.beginPath();
-                ctx.moveTo(ka.position.x, ka.position.y);
-                ctx.lineTo(kb.position.x, kb.position.y);
-                ctx.strokeStyle = '#00e676';
-                ctx.stroke();
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.rotation += this.rotationSpeed;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                ctx.restore();
             }
         }
-        // Draw keypoints
-        for (let i = 0; i < kps.length; i++) {
-            const kp = kps[i];
-            if (kp.score > 0.3) {
-                ctx.beginPath();
-                ctx.arc(kp.position.x, kp.position.y, 5, 0, Math.PI * 2);
-                ctx.fillStyle = (i >= 5 && i <= 10) ? '#ff9800' : '#00e676';
-                ctx.fill();
+
+        function triggerConfetti() {
+            confettiActive = true;
+            confettiParticles = [];
+            for (let i = 0; i < 120; i++) {
+                confettiParticles.push(new ConfettiParticle());
+            }
+            animateConfetti();
+        }
+
+        function animateConfetti() {
+            if (!confettiActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            let alive = false;
+            confettiParticles.forEach(p => {
+                p.update();
+                p.draw();
+                if (p.y < canvas.height) alive = true;
+            });
+
+            if (alive) {
+                requestAnimationFrame(animateConfetti);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                confettiActive = false;
             }
         }
-        // ── Tracked vertical position: centroid of torso points (nose, shoulders, hips) ──
-        const TRACK = [0, 5, 6, 11, 12];
-        let sum = 0, cnt = 0;
-        for (const idx of TRACK) { const k = kps[idx]; if (k.score > 0.3) { sum += k.position.y; cnt++; } }
-        const thr = H * 0.07;
-        if (cnt >= 2) {
-            const trackedY = sum / cnt;
-            // Current tracking line (white, thick) — the axis it counts by
-            hLine(ctx, trackedY, W, '#ffffff', 3, false);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 13px sans-serif';
-            ctx.fillText('● трек', 8, trackedY - 6);
-            if (puBaseline != null) {
-                // Baseline (green) + trigger zone (red dashed)
-                hLine(ctx, puBaseline, W, '#00e676', 2, true);
-                hLine(ctx, puBaseline + thr, W, '#ff2d5e', 1.5, true);
-                hLine(ctx, puBaseline - thr, W, '#ff2d5e', 1.5, true);
-            }
-            processPu(trackedY, thr);
-        } else {
-            document.getElementById('pu-hint').textContent = 'Не вижу тело целиком — отодвинь камеру';
-        }
-    } catch(e) {}
-    puAnimFrame = requestAnimationFrame(detectPose);
-}
 
-function hLine(ctx, y, w, color, width, dashed) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.setLineDash(dashed ? [8, 6] : []);
-    ctx.moveTo(0, y); ctx.lineTo(w, y);
-    ctx.strokeStyle = color; ctx.lineWidth = width;
-    ctx.stroke();
-    ctx.restore();
-}
-
-function processPu(y, thr) {
-    const statusEl = document.getElementById('pu-status');
-    const hintEl = document.getElementById('pu-hint');
-
-    if (puState === 'calib') {
-        puCalibFrames++;
-        // Smoothed baseline = your starting (top) position
-        puBaseline = (puBaseline == null) ? y : puBaseline * 0.7 + y * 0.3;
-        const left = Math.max(0, 25 - puCalibFrames);
-        statusEl.textContent = 'Замри в упоре лёжа';
-        hintEl.textContent = 'Калибровка... ' + left;
-        if (puCalibFrames >= 25) {
-            puState = 'top';
-            statusEl.textContent = 'Опускайся ↓';
-        }
-        return;
-    }
-
-    const delta = y - puBaseline; // движение относительно стартовой позиции
-    hintEl.textContent = 'движение: ' + Math.round(Math.abs(delta)) + 'px / нужно ' + Math.round(thr);
-
-    if (puState === 'top') {
-        // Ушёл достаточно далеко от базы (вниз или вверх — неважно)
-        if (Math.abs(delta) > thr) {
-            puState = 'bottom';
-            statusEl.textContent = 'Поднимайся ↑';
-        }
-    } else if (puState === 'bottom') {
-        // Вернулся близко к стартовой позиции → засчитан повтор
-        if (Math.abs(delta) < thr * 0.4) {
-            puState = 'top';
-            puCount++;
-            ping(1400);
-            if (navigator.vibrate) navigator.vibrate(120);
-            document.getElementById('pu-count').textContent = puCount;
-            if (puCount >= 15) {
-                statusEl.textContent = '🎉 Готово!';
-                hintEl.textContent = 'Отличная работа!';
-                cancelAnimationFrame(puAnimFrame); puAnimFrame = null;
-                setTimeout(dismiss, 1400);
-                return;
-            }
-            statusEl.textContent = 'Опускайся ↓';
-        }
-    }
-}
-
-function stopPuCam() {
-    if (puAnimFrame) { cancelAnimationFrame(puAnimFrame); puAnimFrame = null; }
-    if (puStream) { puStream.getTracks().forEach(t => t.stop()); puStream = null; }
-    const canvas = document.getElementById('pu-canvas');
-    if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
-}
-
-function backToRingFromPu() { stopPuCam(); show('ringing'); }
-
-// ── Init ──
-async function initApp() {
-    await initSounds();          // Generate WAV blobs + prime audio elements
-    await ensurePingCtx();       // Init Web Audio for ping sounds
-    const def = new Date(Date.now() + 8 * 3600000);
-    document.getElementById('alarm-time').value = `${pad(def.getHours())}:${pad(def.getMinutes())}`;
-    show('setup');
-}
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-}
-
-// Restore pre-alarm audio if user returns to app mid-wait
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && alarmAt && new Date() < alarmAt) {
-        if (preAlarmAudio && preAlarmAudio.paused) {
-            preAlarmAudio.play().catch(() => {});
-        }
-    }
-});
-</script>
+        // Initialize App
+        loadState();
+    </script>
 </body>
 </html>
