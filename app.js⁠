@@ -1,0 +1,438 @@
+// State
+let currentWater = 0;
+let dailyGoal = 2000;
+let streak = 0;
+let completedDays = [];
+let historyStack = [];
+let confettiActive = false;
+let detectedWaterAmount = 0;
+let tfModel = null;
+
+// UI Elements
+const waterAmountEl = document.getElementById('waterAmount');
+const percentAmountEl = document.getElementById('percentAmount');
+const headerGoalEl = document.getElementById('headerGoal');
+const streakCountEl = document.getElementById('streakCount');
+const modalStreakCountEl = document.getElementById('modalStreakCount');
+const waterFill = document.getElementById('water-fill');
+const waterSurface = document.getElementById('water-surface');
+const undoBtn = document.getElementById('undoBtn');
+const successDrop = document.getElementById('successDrop');
+
+// Modals
+const settingsOverlay = document.getElementById('settingsOverlay');
+const openSettingsBtn = document.getElementById('openSettingsBtn');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+const dailyGoalInput = document.getElementById('dailyGoalInput');
+
+const streakOverlay = document.getElementById('streakOverlay');
+const openStreakBtn = document.getElementById('openStreakBtn');
+const closeStreakBtn = document.getElementById('closeStreakBtn');
+
+const aiOverlay = document.getElementById('aiOverlay');
+const openAiBtn = document.getElementById('openAiBtn');
+const closeAiBtn = document.getElementById('closeAiBtn');
+const clearPhotoBtn = document.getElementById('clearPhotoBtn');
+
+function getTodayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function loadState() {
+    const todayStr = getTodayStr();
+    const savedDate = localStorage.getItem('h2o_date');
+    
+    dailyGoal = parseInt(localStorage.getItem('h2o_goal')) || 2000;
+    streak = parseInt(localStorage.getItem('h2o_streak')) || 0;
+    
+    try {
+        completedDays = JSON.parse(localStorage.getItem('h2o_completed_days')) || [];
+    } catch(e) { completedDays = []; }
+
+    if (savedDate !== todayStr) {
+        localStorage.setItem('h2o_date', todayStr);
+        currentWater = 0;
+        historyStack = [];
+        localStorage.setItem('h2o_current', '0');
+        localStorage.setItem('h2o_history', '[]');
+    } else {
+        currentWater = parseInt(localStorage.getItem('h2o_current')) || 0;
+        try {
+            historyStack = JSON.parse(localStorage.getItem('h2o_history')) || [];
+        } catch(e) { historyStack = []; }
+    }
+
+    dailyGoalInput.value = dailyGoal;
+    updateUI(false, currentWater);
+}
+
+function saveState() {
+    localStorage.setItem('h2o_current', currentWater.toString());
+    localStorage.setItem('h2o_goal', dailyGoal.toString());
+    localStorage.setItem('h2o_streak', streak.toString());
+    localStorage.setItem('h2o_completed_days', JSON.stringify(completedDays));
+    localStorage.setItem('h2o_history', JSON.stringify(historyStack));
+    localStorage.setItem('h2o_date', getTodayStr());
+}
+
+function playBubbleSound() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const audioCtx = new AudioContext();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(190 + Math.random() * 40, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(450 + Math.random() * 60, audioCtx.currentTime + 0.18);
+        
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+    } catch (e) {}
+}
+
+function updateUI(shouldPlaySound = true, oldWaterValue = 0) {
+    if (shouldPlaySound) playBubbleSound();
+
+    const percentage = Math.min(Math.round((currentWater / dailyGoal) * 100), 100);
+    
+    animateCounter('waterAmount', parseInt(waterAmountEl.innerText) || 0, currentWater);
+    percentAmountEl.innerText = `${percentage}% выпито`;
+    headerGoalEl.innerText = `${dailyGoal}`;
+    streakCountEl.innerText = `${streak}`;
+    modalStreakCountEl.innerText = `${streak}`;
+
+    undoBtn.disabled = historyStack.length === 0;
+
+    const bottomY = 462;
+    const topY = 85;
+    const fillFactor = Math.min(currentWater / dailyGoal, 1.0);
+    const targetY = bottomY - (fillFactor * (bottomY - topY));
+    
+    waterFill.setAttribute('y', targetY.toString());
+    waterSurface.setAttribute('cy', targetY.toString());
+    
+    const targetRx = 65 + (fillFactor * (105 - 65));
+    waterSurface.setAttribute('rx', targetRx.toString());
+    const targetRy = 8 + (fillFactor * (12 - 8));
+    waterSurface.setAttribute('ry', targetRy.toString());
+
+    const todayStr = getTodayStr();
+    
+    // Проверка достижения цели и запуск анимации
+    if (currentWater >= dailyGoal && oldWaterValue < dailyGoal && !completedDays.includes(todayStr)) {
+        completedDays.push(todayStr);
+        streak += 1;
+        streakCountEl.innerText = streak;
+        saveState();
+        
+        // Анимация падающей капли
+        successDrop.classList.remove('animate');
+        void successDrop.offsetWidth; // trigger reflow
+        successDrop.classList.add('animate');
+
+        setTimeout(() => {
+            openStreakModal();
+            if (!confettiActive) triggerConfetti();
+        }, 800);
+    }
+}
+
+function animateCounter(elementId, start, end) {
+    const obj = document.getElementById(elementId);
+    const range = end - start;
+    if (range === 0) return;
+    const duration = 500;
+    let startTime = null;
+
+    function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        obj.innerText = Math.floor(start + (progress * (2 - progress)) * range);
+        if (progress < 1) window.requestAnimationFrame(step);
+        else obj.innerText = end;
+    }
+    window.requestAnimationFrame(step);
+}
+
+function addWater(amount) {
+    const oldWater = currentWater;
+    currentWater += amount;
+    historyStack.push(amount);
+    saveState();
+    updateUI(true, oldWater);
+}
+
+function addCustomWater() {
+    const input = prompt("Введите количество воды (мл):", "300");
+    if (input !== null) {
+        // Очищаем ввод: оставляем только цифры, решаем проблему с багом
+        const cleanInput = input.replace(/\D/g, '');
+        const val = parseInt(cleanInput, 10);
+        
+        if (!isNaN(val) && val > 0 && val <= 5000) {
+            addWater(val);
+        } else {
+            alert("Пожалуйста, введите корректное число (например: 250)");
+        }
+    }
+}
+
+function undoLastAction() {
+    if (historyStack.length === 0) return;
+    const lastAmount = historyStack.pop();
+    const oldWater = currentWater;
+    currentWater = Math.max(0, currentWater - lastAmount);
+    
+    // Если отменили и упали ниже цели, убираем сегодняшний день из стрика
+    const todayStr = getTodayStr();
+    if (oldWater >= dailyGoal && currentWater < dailyGoal && completedDays.includes(todayStr)) {
+        completedDays = completedDays.filter(d => d !== todayStr);
+        streak = Math.max(0, streak - 1);
+    }
+    
+    saveState();
+    updateUI(false, currentWater);
+}
+
+function resetApp() {
+    if (confirm("Обнулить весь прогресс за сегодня?")) {
+        currentWater = 0;
+        historyStack = [];
+        
+        const todayStr = getTodayStr();
+        if (completedDays.includes(todayStr)) {
+            completedDays = completedDays.filter(d => d !== todayStr);
+            streak = Math.max(0, streak - 1);
+        }
+        
+        saveState();
+        updateUI(false, currentWater);
+    }
+}
+
+function handleGlassTap() {
+    addWater(250);
+}
+
+// Calendar Logic
+function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    grid.innerHTML = '';
+    
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    
+    const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+    document.getElementById('calendarMonthTitle').innerText = `${monthNames[month]} ${year}`;
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const dayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+    dayLabels.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'calendar-day-label';
+        el.innerText = d;
+        grid.appendChild(el);
+    });
+
+    const todayNum = now.getDate();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-cell';
+        cell.innerText = day;
+        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+        if (completedDays.includes(dateKey)) cell.classList.add('completed');
+        if (day === todayNum) cell.classList.add('today');
+
+        grid.appendChild(cell);
+    }
+}
+
+function openStreakModal() {
+    renderCalendar();
+    streakOverlay.classList.add('active');
+}
+
+openStreakBtn.addEventListener('click', openStreakModal);
+closeStreakBtn.addEventListener('click', () => streakOverlay.classList.remove('active'));
+
+// Smart COCO-SSD AI Logic
+openAiBtn.addEventListener('click', () => aiOverlay.classList.add('active'));
+closeAiBtn.addEventListener('click', () => {
+    aiOverlay.classList.remove('active');
+    resetAiScanner();
+});
+
+function resetAiScanner() {
+    document.getElementById('scannedImg').style.display = 'none';
+    document.getElementById('scannedImg').src = '';
+    document.getElementById('scannerPlaceholder').style.display = 'block';
+    document.getElementById('aiResultCard').style.display = 'none';
+    clearPhotoBtn.style.display = 'none';
+}
+
+clearPhotoBtn.addEventListener('click', resetAiScanner);
+
+async function processAiImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const scannedImg = document.getElementById('scannedImg');
+    const placeholder = document.getElementById('scannerPlaceholder');
+    const scanLine = document.getElementById('scanLine');
+    const loadingText = document.getElementById('aiLoadingText');
+    const resultCard = document.getElementById('aiResultCard');
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        scannedImg.src = e.target.result;
+        scannedImg.style.display = 'block';
+        placeholder.style.display = 'none';
+        scanLine.style.display = 'block';
+        clearPhotoBtn.style.display = 'block';
+        loadingText.innerText = "COCO-SSD ищет объекты...";
+        loadingText.style.display = 'block';
+        resultCard.style.display = 'none';
+
+        scannedImg.onload = async () => {
+            try {
+                if (!tfModel) {
+                    tfModel = await cocoSsd.load(); // Умная модель Object Detection
+                }
+                
+                const predictions = await tfModel.detect(scannedImg);
+                scanLine.style.display = 'none';
+                loadingText.style.display = 'none';
+
+                console.log("Found Objects:", predictions);
+
+                let estVolume = 0;
+                let detectedName = "Неизвестно";
+
+                // Ищем подходящие объекты среди найденных
+                const validObject = predictions.find(p => 
+                    ['bottle', 'cup', 'wine glass', 'bowl'].includes(p.class)
+                );
+
+                if (validObject) {
+                    detectedName = validObject.class;
+                    if (detectedName === 'bottle') estVolume = 500;
+                    if (detectedName === 'cup') estVolume = 250;
+                    if (detectedName === 'wine glass') estVolume = 200;
+                    if (detectedName === 'bowl') estVolume = 400;
+
+                    detectedWaterAmount = estVolume;
+                    document.getElementById('aiClassLabel').innerText = `Найдено: ${detectedName}`;
+                    document.getElementById('aiResultVal').innerText = `~${detectedWaterAmount} мл`;
+                    document.getElementById('aiConfirmBtn').style.display = 'block';
+                } else {
+                    detectedWaterAmount = 0;
+                    document.getElementById('aiClassLabel').innerText = `Посуда не найдена`;
+                    document.getElementById('aiResultVal').innerText = `0 мл`;
+                    document.getElementById('aiConfirmBtn').style.display = 'none';
+                }
+                resultCard.style.display = 'block';
+                
+            } catch (err) {
+                console.error(err);
+                scanLine.style.display = 'none';
+                loadingText.innerText = "Ошибка нейросети";
+            }
+        };
+    };
+    reader.readAsDataURL(file);
+}
+
+function confirmAiWater() {
+    if (detectedWaterAmount > 0) {
+        addWater(detectedWaterAmount);
+        aiOverlay.classList.remove('active');
+        resetAiScanner();
+    }
+}
+
+// Settings
+openSettingsBtn.addEventListener('click', () => settingsOverlay.classList.add('active'));
+closeSettingsBtn.addEventListener('click', closeSettings);
+settingsOverlay.addEventListener('click', (e) => { if (e.target === settingsOverlay) closeSettings(); });
+
+function closeSettings() {
+    settingsOverlay.classList.remove('active');
+    let val = parseInt(dailyGoalInput.value);
+    if (isNaN(val) || val < 500) val = 2000;
+    dailyGoal = Math.min(val, 10000);
+    dailyGoalInput.value = dailyGoal;
+    saveState();
+    updateUI(false, currentWater);
+}
+
+// Confetti
+const canvas = document.getElementById('confetti');
+const ctx = canvas.getContext('2d');
+let confettiParticles = [];
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+class ConfettiParticle {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height - canvas.height;
+        this.size = Math.random() * 8 + 6;
+        this.color = `hsl(${Math.random() * 360}, 80%, 60%)`;
+        this.speedX = Math.random() * 4 - 2;
+        this.speedY = Math.random() * 5 + 4;
+        this.rotation = Math.random() * 360;
+        this.rotationSpeed = Math.random() * 10 - 5;
+    }
+    update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.rotation += this.rotationSpeed;
+    }
+    draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation * Math.PI / 180);
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+        ctx.restore();
+    }
+}
+
+function triggerConfetti() {
+    confettiActive = true;
+    confettiParticles = Array.from({ length: 120 }, () => new ConfettiParticle());
+    animateConfetti();
+}
+
+function animateConfetti() {
+    if (!confettiActive) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    confettiParticles.forEach(p => {
+        p.update();
+        p.draw();
+        if (p.y < canvas.height) alive = true;
+    });
+    if (alive) requestAnimationFrame(animateConfetti);
+    else confettiActive = false;
+}
+
+// Init
+loadState();
