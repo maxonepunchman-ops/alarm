@@ -156,38 +156,41 @@
 
         .glass-wrapper:active .glass-svg { transform: scale(0.97); }
 
-        /* Эффект струи и брызг воды */
+        /* Реалистичная падающая струя воды */
         .pouring-stream {
             position: absolute;
-            top: -80px;
+            top: -90px;
             left: 50%;
             transform: translateX(-50%);
-            width: 6px;
+            width: 8px;
             height: 0px;
-            background: linear-gradient(to bottom, rgba(59,130,246,0.2), #3b82f6);
-            border-radius: 4px;
+            background: linear-gradient(to bottom, rgba(96,165,250,0.1), #3b82f6, #1d4ed8);
+            border-radius: 6px;
             pointer-events: none;
             opacity: 0;
             z-index: 12;
+            filter: drop-shadow(0 0 6px rgba(59,130,246,0.6));
         }
 
         .pouring-stream.animate {
-            animation: streamPour 0.5s ease-in-out forwards;
+            animation: streamPourAdvanced 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
-        @keyframes streamPour {
-            0% { height: 0px; opacity: 1; top: -80px; }
-            50% { height: 160px; opacity: 1; top: -80px; }
-            100% { height: 0px; opacity: 0; top: 20px; }
+        @keyframes streamPourAdvanced {
+            0% { height: 0px; opacity: 0; top: -90px; width: 4px; }
+            20% { height: 170px; opacity: 1; top: -90px; width: 8px; }
+            80% { height: 170px; opacity: 1; top: -90px; width: 6px; }
+            100% { height: 0px; opacity: 0; top: 30px; width: 4px; }
         }
 
+        /* Брызги при ударе струи о поверхность */
         .splash-container {
             position: absolute;
             top: 70px;
             left: 50%;
             transform: translateX(-50%);
-            width: 120px;
-            height: 40px;
+            width: 140px;
+            height: 50px;
             pointer-events: none;
             z-index: 12;
             display: none;
@@ -195,27 +198,37 @@
 
         .splash-drop {
             position: absolute;
-            background: #60a5fa;
+            background: #93c5fd;
             border-radius: 50%;
             opacity: 0;
+            box-shadow: 0 0 4px rgba(59,130,246,0.8);
         }
 
         .splash-container.animate .splash-drop {
-            animation: splashAnim 0.5s ease-out forwards;
+            animation: splashBurst 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
         }
 
-        .splash-drop:nth-child(1) { width: 8px; height: 8px; left: 30%; animation-delay: 0.2s; --tx: -35px; --ty: -25px; }
-        .splash-drop:nth-child(2) { width: 6px; height: 6px; left: 50%; animation-delay: 0.2s; --tx: 0px; --ty: -35px; }
-        .splash-drop:nth-child(3) { width: 9px; height: 9px; left: 70%; animation-delay: 0.2s; --tx: 35px; --ty: -25px; }
-        .splash-drop:nth-child(4) { width: 5px; height: 5px; left: 40%; animation-delay: 0.2s; --tx: -20px; --ty: -15px; }
-        .splash-drop:nth-child(5) { width: 7px; height: 7px; left: 60%; animation-delay: 0.2s; --tx: 20px; --ty: -15px; }
+        .splash-drop:nth-child(1) { width: 7px; height: 7px; left: 40%; animation-delay: 0.15s; --tx: -45px; --ty: -30px; }
+        .splash-drop:nth-child(2) { width: 5px; height: 5px; left: 46%; animation-delay: 0.15s; --tx: -20px; --ty: -45px; }
+        .splash-drop:nth-child(3) { width: 8px; height: 8px; left: 52%; animation-delay: 0.15s; --tx: 20px; --ty: -45px; }
+        .splash-drop:nth-child(4) { width: 6px; height: 6px; left: 58%; animation-delay: 0.15s; --tx: 45px; --ty: -30px; }
+        .splash-drop:nth-child(5) { width: 4px; height: 4px; left: 48%; animation-delay: 0.15s; --tx: 0px; --ty: -35px; }
 
-        @keyframes splashAnim {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--tx), var(--ty)) scale(0.3); opacity: 0; }
+        @keyframes splashBurst {
+            0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
         }
 
-        /* Эпичный полет капли в счетчик дней при выполнении нормы */
+        /* Анимация волн внутри стакана */
+        .wave-path {
+            animation: waveMove 3s infinite linear;
+        }
+        @keyframes waveMove {
+            0% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
+            50% { d: path("M 40,0 Q 95,12 150,0 Q 205,-12 260,0 L 260,400 L 40,400 Z"); }
+            100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
+        }
+
         .flying-success-drop {
             position: fixed;
             font-size: 36px;
@@ -224,14 +237,6 @@
             transition: all 0.9s cubic-bezier(0.15, 0.85, 0.35, 1.2);
             transform: translate(-50%, -50%) scale(1) rotate(0deg);
             opacity: 0;
-        }
-
-        .water-vortex {
-            animation: vortexSpin 0.8s ease-in-out infinite alternate;
-        }
-        @keyframes vortexSpin {
-            0% { transform: scale(1) skewX(0deg); }
-            100% { transform: scale(1.03) skewX(3deg); }
         }
 
         .controls {
@@ -403,12 +408,12 @@
                     <polygon points="43,78 257,78 213,462 87,462" />
                 </clipPath>
                 <linearGradient id="water-grad" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0.9" />
-                    <stop offset="60%" stop-color="#2563eb" stop-opacity="0.8" />
-                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.7" />
+                    <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0.95" />
+                    <stop offset="60%" stop-color="#2563eb" stop-opacity="0.85" />
+                    <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.75" />
                 </linearGradient>
                 <linearGradient id="glass-glow" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25" />
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3" />
                     <stop offset="15%" stop-color="#ffffff" stop-opacity="0.0" />
                     <stop offset="85%" stop-color="#ffffff" stop-opacity="0.0" />
                     <stop offset="100%" stop-color="#ffffff" stop-opacity="0.2" />
@@ -417,8 +422,10 @@
             <ellipse cx="150" cy="470" rx="72" ry="12" fill="rgba(0,0,0,0.04)" />
             <polygon points="45,80 255,80 215,460 85,460" fill="rgba(255, 255, 255, 0.45)" />
             <g clip-path="url(#water-clip)">
-                <rect id="water-fill" x="0" y="462" width="300" height="384" fill="url(#water-grad)" style="transition: y 0.8s cubic-bezier(0.25, 1, 0.5, 1);" />
-                <ellipse id="water-surface" cx="150" cy="462" rx="65" ry="8" fill="#60a5fa" opacity="0.9" style="transition: cy 0.8s cubic-bezier(0.25, 1, 0.5, 1), rx 0.8s cubic-bezier(0.25, 1, 0.5, 1), ry 0.8s cubic-bezier(0.25, 1, 0.5, 1);" />
+                <!-- Группа воды с плавной волной -->
+                <g id="water-group" transform="translate(0, 462)" style="transition: transform 0.9s cubic-bezier(0.25, 1, 0.5, 1);">
+                    <path class="wave-path" fill="url(#water-grad)" />
+                </g>
             </g>
             <path d="M 45,80 A 105,12 0 0 1 255,80" fill="none" stroke="rgba(46, 53, 63, 0.15)" stroke-width="1.5" />
             <line x1="45" y1="80" x2="85" y2="460" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
@@ -515,12 +522,10 @@
         const headerGoalEl = document.getElementById('headerGoal');
         const streakCountEl = document.getElementById('streakCount');
         const modalStreakCountEl = document.getElementById('modalStreakCount');
-        const waterFill = document.getElementById('water-fill');
-        const waterSurface = document.getElementById('water-surface');
+        const waterGroup = document.getElementById('water-group');
         const undoBtn = document.getElementById('undoBtn');
         const pouringStream = document.getElementById('pouringStream');
         const splashContainer = document.getElementById('splashContainer');
-        const glassSvg = document.getElementById('glassSvg');
 
         const settingsOverlay = document.getElementById('settingsOverlay');
         const openSettingsBtn = document.getElementById('openSettingsBtn');
@@ -585,16 +590,16 @@
                 const gain = audioCtx.createGain();
                 
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(200 + Math.random() * 50, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(500 + Math.random() * 80, audioCtx.currentTime + 0.2);
+                osc.frequency.setValueAtTime(220 + Math.random() * 60, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(550 + Math.random() * 90, audioCtx.currentTime + 0.25);
                 
-                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
                 
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start();
-                osc.stop(audioCtx.currentTime + 0.22);
+                osc.stop(audioCtx.currentTime + 0.27);
             } catch (e) {}
         }
 
@@ -603,16 +608,10 @@
             
             pouringStream.classList.remove('animate');
             splashContainer.classList.remove('animate');
-            glassSvg.classList.remove('water-vortex');
             void pouringStream.offsetWidth;
             
             pouringStream.classList.add('animate');
             splashContainer.classList.add('animate');
-            glassSvg.classList.add('water-vortex');
-            
-            setTimeout(() => {
-                glassSvg.classList.remove('water-vortex');
-            }, 800);
         }
 
         function updateUI(shouldPlaySound = true, oldWaterValue = 0) {
@@ -635,13 +634,7 @@
             const fillFactor = Math.min(currentWater / dailyGoal, 1.0);
             const targetY = bottomY - (fillFactor * (bottomY - topY));
             
-            waterFill.setAttribute('y', targetY.toString());
-            waterSurface.setAttribute('cy', targetY.toString());
-            
-            const targetRx = 65 + (fillFactor * (105 - 65));
-            waterSurface.setAttribute('rx', targetRx.toString());
-            const targetRy = 8 + (fillFactor * (12 - 8));
-            waterSurface.setAttribute('ry', targetRy.toString());
+            waterGroup.style.transform = `translate(0px, ${targetY - 462}px)`;
 
             const todayStr = getTodayStr();
             
