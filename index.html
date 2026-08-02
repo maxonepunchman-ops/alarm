@@ -5,18 +5,304 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>H2O Tracker</title>
     
-    <!-- Подключаем стили -->
-    <link rel="stylesheet" href="style.css">
-
     <!-- TensorFlow.js + COCO-SSD (Умная нейросеть для поиска объектов) -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+    <style>
+        :root {
+            --bg-color: #fafbfc;
+            --text-main: #2e353f;
+            --text-secondary: #8e95a1;
+            --water-blue: #3b82f6;
+            --water-dark: #1d4ed8;
+            --water-light-bg: rgba(59, 130, 246, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            background: radial-gradient(circle at center, #ffffff 0%, #f1f3f5 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: calc(15px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)) 20px;
+            overflow: hidden;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-badge {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(46, 53, 63, 0.1);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .top-badge:active { transform: scale(0.94); }
+        .top-badge.streak {
+            color: var(--water-dark);
+            border-color: rgba(59, 130, 246, 0.25);
+            background: var(--water-light-bg);
+        }
+
+        .droplet-icon {
+            display: inline-block;
+            animation: pulseDroplet 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseDroplet {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(46, 53, 63, 0.1);
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, background 0.2s;
+            backdrop-filter: blur(8px);
+        }
+
+        .icon-btn:active {
+            transform: scale(0.92);
+            background: #e5e7eb;
+        }
+
+        .settings-btn svg { width: 20px; height: 20px; fill: var(--text-main); opacity: 0.85; }
+
+        .stats-container {
+            text-align: center;
+            margin-top: 15px;
+            z-index: 2;
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .ml-display-wrapper { display: flex; align-items: baseline; justify-content: center; }
+        .ml-display {
+            font-size: min(15vw, 72px);
+            font-weight: 800;
+            letter-spacing: -2px;
+            background: linear-gradient(180deg, var(--text-main) 0%, #111827 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+            line-height: 1;
+        }
+
+        .unit-label { font-size: clamp(22px, 5vw, 36px); font-weight: 700; color: var(--text-main); margin-left: 6px; }
+        .percentage-display { font-size: 18px; font-weight: 600; color: var(--text-secondary); margin-top: 4px; }
+
+        .glass-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 250px;
+            height: 340px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: auto 0;
+            cursor: pointer;
+        }
+
+        .glass-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.03));
+            transition: transform 0.1s ease;
+        }
+
+        .glass-wrapper:active .glass-svg { transform: scale(0.97); }
+
+        .success-drop {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%) scale(1);
+            font-size: 45px;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .success-drop.animate {
+            animation: dropFall 0.7s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+        }
+
+        @keyframes dropFall {
+            0% { top: -60px; opacity: 1; transform: translateX(-50%) scale(1); }
+            80% { opacity: 1; transform: translateX(-50%) scale(0.9); }
+            100% { top: 200px; opacity: 0; transform: translateX(-50%) scale(0.5); }
+        }
+
+        .controls {
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 5;
+            margin-bottom: calc(10px + env(safe-area-inset-bottom));
+        }
+
+        .quick-add-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .btn-add {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1.5px solid rgba(46, 53, 63, 0.12);
+            padding: 12px 0;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-add:active { background: var(--text-main); color: #ffffff; transform: scale(0.95); }
+
+        .btn-secondary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-action {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(46, 53, 63, 0.1);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px; border-radius: 12px; transition: all 0.2s ease;
+        }
+        .btn-action:disabled { opacity: 0.3; cursor: default; }
+        .btn-action:not(:disabled):active { background: rgba(0, 0, 0, 0.08); color: var(--text-main); }
+        .btn-reset-danger { color: #ef4444; border-color: rgba(239, 68, 68, 0.15); background: rgba(254, 226, 226, 0.4); }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+            z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            display: flex; align-items: flex-end;
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        .sheet {
+            width: 100%; background: #ffffff; border-top-left-radius: 24px; border-top-right-radius: 24px;
+            padding: 25px 24px calc(30px + env(safe-area-inset-bottom)) 24px;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;
+        }
+        .overlay.active .sheet { transform: translateY(0); }
+
+        .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .sheet-title { font-size: 19px; font-weight: 700; color: var(--text-main); }
+        .sheet-close { background: #f1f3f5; border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; color: var(--text-secondary); cursor: pointer; }
+
+        .calendar-header { text-align: center; font-weight: 700; font-size: 16px; margin-bottom: 12px; color: var(--text-main); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+        .calendar-day-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); padding-bottom: 6px; }
+        .calendar-cell {
+            aspect-ratio: 1; border-radius: 12px; background: #f1f3f5;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 600; color: var(--text-main); position: relative;
+        }
+        .calendar-cell.completed { background: #dbeafe; color: var(--water-dark); border: 1.5px solid var(--water-blue); }
+        .calendar-cell.completed::after { content: "💧"; font-size: 10px; position: absolute; bottom: 2px; }
+        .calendar-cell.today { box-shadow: 0 0 0 2px var(--text-main); }
+
+        .streak-card { text-align: center; padding: 20px 10px; }
+        .streak-big-icon { font-size: 70px; display: inline-block; animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes bounceIn { 0% { transform: scale(0); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .streak-title { font-size: 26px; font-weight: 800; color: var(--water-dark); margin: 10px 0 5px 0; }
+        .streak-subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; font-weight: 500; }
+
+        /* AI Сканер */
+        .scanner-box {
+            position: relative; width: 100%; height: 220px; background: #0f172a;
+            border-radius: 18px; overflow: hidden; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; color: #94a3b8;
+            margin-bottom: 15px; border: 2px dashed rgba(255,255,255,0.2);
+        }
+        .scanner-box img { width: 100%; height: 100%; object-fit: cover; }
+        .clear-photo-btn {
+            position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.6);
+            color: white; border: none; border-radius: 50%; width: 30px; height: 30px;
+            font-size: 16px; cursor: pointer; display: none; z-index: 10; backdrop-filter: blur(4px);
+        }
+        .scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: #3b82f6; box-shadow: 0 0 15px #3b82f6; display: none;
+            animation: scanAnim 1.5s infinite alternate ease-in-out;
+        }
+        @keyframes scanAnim { 0% { top: 5%; } 100% { top: 90%; } }
+        .ai-loading-text {
+            position: absolute; bottom: 15px; background: rgba(0,0,0,0.7);
+            color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px;
+            font-weight: 600; display: none; backdrop-filter: blur(4px);
+        }
+        .btn-primary {
+            width: 100%; background: #2563eb; color: white; border: none;
+            padding: 15px; border-radius: 14px; font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn-primary:active { background: #1d4ed8; }
+        .ai-result-card {
+            background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px;
+            padding: 15px; text-align: center; margin-top: 15px; display: none;
+        }
+        .ai-result-val { font-size: 26px; font-weight: 800; color: #2563eb; margin: 4px 0 10px 0; }
+
+        .setting-input {
+            width: 100%; background: #f1f3f5; border: none; padding: 16px;
+            border-radius: 12px; font-size: 16px; font-weight: 600; color: var(--text-main);
+            outline: none; text-align: center; margin-top: 8px;
+        }
+
+        #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 150; }
+    </style>
 </head>
 <body>
 
     <canvas id="confetti"></canvas>
 
-    <!-- Шапка -->
     <div class="header">
         <div class="header-left">
             <div class="top-badge streak" id="openStreakBtn" title="Календарь ударного режима">
@@ -36,7 +322,6 @@
         </div>
     </div>
 
-    <!-- Статистика -->
     <div class="stats-container">
         <div class="ml-display-wrapper">
             <span class="ml-display" id="waterAmount">0</span>
@@ -45,7 +330,6 @@
         <div class="percentage-display" id="percentAmount">0% выпито</div>
     </div>
 
-    <!-- Интерактивный стакан + Анимация капли -->
     <div class="glass-wrapper" id="glassTapArea" onclick="handleGlassTap()">
         <div id="successDrop" class="success-drop">💧</div>
         <svg viewBox="0 0 300 500" class="glass-svg">
@@ -65,15 +349,12 @@
                     <stop offset="100%" stop-color="#ffffff" stop-opacity="0.2" />
                 </linearGradient>
             </defs>
-
             <ellipse cx="150" cy="470" rx="72" ry="12" fill="rgba(0,0,0,0.04)" />
             <polygon points="45,80 255,80 215,460 85,460" fill="rgba(255, 255, 255, 0.45)" />
-
             <g clip-path="url(#water-clip)">
                 <rect id="water-fill" x="0" y="462" width="300" height="384" fill="url(#water-grad)" style="transition: y 0.8s cubic-bezier(0.25, 1, 0.5, 1);" />
                 <ellipse id="water-surface" cx="150" cy="462" rx="65" ry="8" fill="#60a5fa" opacity="0.9" style="transition: cy 0.8s cubic-bezier(0.25, 1, 0.5, 1), rx 0.8s cubic-bezier(0.25, 1, 0.5, 1), ry 0.8s cubic-bezier(0.25, 1, 0.5, 1);" />
             </g>
-
             <path d="M 45,80 A 105,12 0 0 1 255,80" fill="none" stroke="rgba(46, 53, 63, 0.15)" stroke-width="1.5" />
             <line x1="45" y1="80" x2="85" y2="460" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
             <line x1="255" y1="80" x2="215" y2="460" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
@@ -83,7 +364,6 @@
         </svg>
     </div>
 
-    <!-- Кнопки управления -->
     <div class="controls">
         <div class="quick-add-row">
             <button class="btn-add" onclick="addWater(150)">+150</button>
@@ -91,7 +371,6 @@
             <button class="btn-add" onclick="addWater(500)">+500</button>
             <button class="btn-add" onclick="addCustomWater()">+ Свой</button>
         </div>
-        
         <div class="btn-secondary-row">
             <button class="btn-action" id="undoBtn" onclick="undoLastAction()" disabled>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
@@ -104,33 +383,28 @@
         </div>
     </div>
 
-    <!-- Календарь -->
     <div class="overlay" id="streakOverlay">
         <div class="sheet">
             <div class="sheet-header">
                 <span class="sheet-title">Ударный режим 💧</span>
                 <button class="sheet-close" id="closeStreakBtn">&times;</button>
             </div>
-            
             <div class="streak-card">
                 <div class="streak-big-icon">💧</div>
                 <div class="streak-title"><span id="modalStreakCount">0</span> Дней подряд</div>
                 <div class="streak-subtitle">Выполняйте норму воды каждый день!</div>
             </div>
-
             <div class="calendar-header" id="calendarMonthTitle">Месяц</div>
             <div class="calendar-grid" id="calendarGrid"></div>
         </div>
     </div>
 
-    <!-- Умный AI Сканер -->
     <div class="overlay" id="aiOverlay">
         <div class="sheet">
             <div class="sheet-header">
                 <span class="sheet-title">AI Сканер 🤖</span>
                 <button class="sheet-close" id="closeAiBtn">&times;</button>
             </div>
-            
             <div class="scanner-box" id="scannerBox">
                 <button id="clearPhotoBtn" class="clear-photo-btn" title="Убрать фото">&times;</button>
                 <div class="scan-line" id="scanLine"></div>
@@ -138,11 +412,8 @@
                 <div id="scannerPlaceholder">📸 Сделайте фото емкости с водой</div>
                 <div class="ai-loading-text" id="aiLoadingText">Нейросеть сканирует...</div>
             </div>
-
             <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="processAiImage(event)">
-            
             <button class="btn-primary" id="btnScanPhoto" onclick="document.getElementById('cameraInput').click()">Сфотографировать емкость</button>
-
             <div class="ai-result-card" id="aiResultCard">
                 <div style="font-size:12px; color:#64748b; font-weight:700; text-transform:uppercase;" id="aiClassLabel">Распознанный объект</div>
                 <div class="ai-result-val" id="aiResultVal">~0 мл</div>
@@ -151,7 +422,6 @@
         </div>
     </div>
 
-    <!-- Настройки -->
     <div class="overlay" id="settingsOverlay">
         <div class="sheet">
             <div class="sheet-header">
@@ -165,7 +435,406 @@
         </div>
     </div>
 
-    <!-- Подключаем логику -->
-    <script src="app.js"></script>
+    <script>
+        let currentWater = 0;
+        let dailyGoal = 2000;
+        let streak = 0;
+        let completedDays = [];
+        let historyStack = [];
+        let confettiActive = false;
+        let detectedWaterAmount = 0;
+        let tfModel = null;
+
+        const waterAmountEl = document.getElementById('waterAmount');
+        const percentAmountEl = document.getElementById('percentAmount');
+        const headerGoalEl = document.getElementById('headerGoal');
+        const streakCountEl = document.getElementById('streakCount');
+        const modalStreakCountEl = document.getElementById('modalStreakCount');
+        const waterFill = document.getElementById('water-fill');
+        const waterSurface = document.getElementById('water-surface');
+        const undoBtn = document.getElementById('undoBtn');
+        const successDrop = document.getElementById('successDrop');
+
+        const settingsOverlay = document.getElementById('settingsOverlay');
+        const openSettingsBtn = document.getElementById('openSettingsBtn');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const dailyGoalInput = document.getElementById('dailyGoalInput');
+
+        const streakOverlay = document.getElementById('streakOverlay');
+        const openStreakBtn = document.getElementById('openStreakBtn');
+        const closeStreakBtn = document.getElementById('closeStreakBtn');
+
+        const aiOverlay = document.getElementById('aiOverlay');
+        const openAiBtn = document.getElementById('openAiBtn');
+        const closeAiBtn = document.getElementById('closeAiBtn');
+        const clearPhotoBtn = document.getElementById('clearPhotoBtn');
+
+        function getTodayStr() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function loadState() {
+            const todayStr = getTodayStr();
+            const savedDate = localStorage.getItem('h2o_date');
+            
+            dailyGoal = parseInt(localStorage.getItem('h2o_goal')) || 2000;
+            streak = parseInt(localStorage.getItem('h2o_streak')) || 0;
+            
+            try { completedDays = JSON.parse(localStorage.getItem('h2o_completed_days')) || []; } 
+            catch(e) { completedDays = []; }
+
+            if (savedDate !== todayStr) {
+                localStorage.setItem('h2o_date', todayStr);
+                currentWater = 0;
+                historyStack = [];
+                localStorage.setItem('h2o_current', '0');
+                localStorage.setItem('h2o_history', '[]');
+            } else {
+                currentWater = parseInt(localStorage.getItem('h2o_current')) || 0;
+                try { historyStack = JSON.parse(localStorage.getItem('h2o_history')) || []; } 
+                catch(e) { historyStack = []; }
+            }
+
+            dailyGoalInput.value = dailyGoal;
+            updateUI(false, currentWater);
+        }
+
+        function saveState() {
+            localStorage.setItem('h2o_current', currentWater.toString());
+            localStorage.setItem('h2o_goal', dailyGoal.toString());
+            localStorage.setItem('h2o_streak', streak.toString());
+            localStorage.setItem('h2o_completed_days', JSON.stringify(completedDays));
+            localStorage.setItem('h2o_history', JSON.stringify(historyStack));
+            localStorage.setItem('h2o_date', getTodayStr());
+        }
+
+        function playBubbleSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const audioCtx = new AudioContext();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(190 + Math.random() * 40, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(450 + Math.random() * 60, audioCtx.currentTime + 0.18);
+                
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } catch (e) {}
+        }
+
+        function updateUI(shouldPlaySound = true, oldWaterValue = 0) {
+            if (shouldPlaySound) playBubbleSound();
+
+            const percentage = Math.min(Math.round((currentWater / dailyGoal) * 100), 100);
+            
+            animateCounter('waterAmount', parseInt(waterAmountEl.innerText) || 0, currentWater);
+            percentAmountEl.innerText = `${percentage}% выпито`;
+            headerGoalEl.innerText = `${dailyGoal}`;
+            streakCountEl.innerText = `${streak}`;
+            modalStreakCountEl.innerText = `${streak}`;
+
+            undoBtn.disabled = historyStack.length === 0;
+
+            const bottomY = 462;
+            const topY = 85;
+            const fillFactor = Math.min(currentWater / dailyGoal, 1.0);
+            const targetY = bottomY - (fillFactor * (bottomY - topY));
+            
+            waterFill.setAttribute('y', targetY.toString());
+            waterSurface.setAttribute('cy', targetY.toString());
+            
+            const targetRx = 65 + (fillFactor * (105 - 65));
+            waterSurface.setAttribute('rx', targetRx.toString());
+            const targetRy = 8 + (fillFactor * (12 - 8));
+            waterSurface.setAttribute('ry', targetRy.toString());
+
+            const todayStr = getTodayStr();
+            
+            if (currentWater >= dailyGoal && oldWaterValue < dailyGoal && !completedDays.includes(todayStr)) {
+                completedDays.push(todayStr);
+                streak += 1;
+                streakCountEl.innerText = streak;
+                saveState();
+                
+                successDrop.classList.remove('animate');
+                void successDrop.offsetWidth;
+                successDrop.classList.add('animate');
+
+                setTimeout(() => {
+                    openStreakModal();
+                    if (!confettiActive) triggerConfetti();
+                }, 800);
+            }
+        }
+
+        function animateCounter(elementId, start, end) {
+            const obj = document.getElementById(elementId);
+            const range = end - start;
+            if (range === 0) return;
+            const duration = 500;
+            let startTime = null;
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                obj.innerText = Math.floor(start + (progress * (2 - progress)) * range);
+                if (progress < 1) window.requestAnimationFrame(step);
+                else obj.innerText = end;
+            }
+            window.requestAnimationFrame(step);
+        }
+
+        function addWater(amount) {
+            const oldWater = currentWater;
+            currentWater += amount;
+            historyStack.push(amount);
+            saveState();
+            updateUI(true, oldWater);
+        }
+
+        function addCustomWater() {
+            const input = prompt("Введите количество воды (мл):", "300");
+            if (input !== null) {
+                const cleanInput = input.replace(/\D/g, ''); // Жесткая очистка от букв
+                const val = parseInt(cleanInput, 10);
+                if (!isNaN(val) && val > 0 && val <= 5000) addWater(val);
+                else alert("Пожалуйста, введите корректное число (например: 250)");
+            }
+        }
+
+        function undoLastAction() {
+            if (historyStack.length === 0) return;
+            const lastAmount = historyStack.pop();
+            const oldWater = currentWater;
+            currentWater = Math.max(0, currentWater - lastAmount);
+            
+            const todayStr = getTodayStr();
+            if (oldWater >= dailyGoal && currentWater < dailyGoal && completedDays.includes(todayStr)) {
+                completedDays = completedDays.filter(d => d !== todayStr);
+                streak = Math.max(0, streak - 1);
+            }
+            saveState();
+            updateUI(false, currentWater);
+        }
+
+        function resetApp() {
+            if (confirm("Обнулить весь прогресс за сегодня?")) {
+                currentWater = 0;
+                historyStack = [];
+                const todayStr = getTodayStr();
+                if (completedDays.includes(todayStr)) {
+                    completedDays = completedDays.filter(d => d !== todayStr);
+                    streak = Math.max(0, streak - 1);
+                }
+                saveState();
+                updateUI(false, currentWater);
+            }
+        }
+
+        function handleGlassTap() { addWater(250); }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+            document.getElementById('calendarMonthTitle').innerText = `${monthNames[month]} ${year}`;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const dayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+            dayLabels.forEach(d => {
+                const el = document.createElement('div');
+                el.className = 'calendar-day-label';
+                el.innerText = d;
+                grid.appendChild(el);
+            });
+
+            const todayNum = now.getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                cell.innerText = day;
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                if (completedDays.includes(dateKey)) cell.classList.add('completed');
+                if (day === todayNum) cell.classList.add('today');
+                grid.appendChild(cell);
+            }
+        }
+
+        function openStreakModal() {
+            renderCalendar();
+            streakOverlay.classList.add('active');
+        }
+
+        openStreakBtn.addEventListener('click', openStreakModal);
+        closeStreakBtn.addEventListener('click', () => streakOverlay.classList.remove('active'));
+
+        openAiBtn.addEventListener('click', () => aiOverlay.classList.add('active'));
+        closeAiBtn.addEventListener('click', () => {
+            aiOverlay.classList.remove('active');
+            resetAiScanner();
+        });
+
+        function resetAiScanner() {
+            document.getElementById('scannedImg').style.display = 'none';
+            document.getElementById('scannedImg').src = '';
+            document.getElementById('scannerPlaceholder').style.display = 'block';
+            document.getElementById('aiResultCard').style.display = 'none';
+            clearPhotoBtn.style.display = 'none';
+            document.getElementById('cameraInput').value = ""; 
+        }
+
+        clearPhotoBtn.addEventListener('click', resetAiScanner);
+
+        async function processAiImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const scannedImg = document.getElementById('scannedImg');
+            const placeholder = document.getElementById('scannerPlaceholder');
+            const scanLine = document.getElementById('scanLine');
+            const loadingText = document.getElementById('aiLoadingText');
+            const resultCard = document.getElementById('aiResultCard');
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                scannedImg.src = e.target.result;
+                scannedImg.style.display = 'block';
+                placeholder.style.display = 'none';
+                scanLine.style.display = 'block';
+                clearPhotoBtn.style.display = 'block';
+                loadingText.innerText = "COCO-SSD ищет объекты...";
+                loadingText.style.display = 'block';
+                resultCard.style.display = 'none';
+
+                scannedImg.onload = async () => {
+                    try {
+                        if (!tfModel) tfModel = await cocoSsd.load();
+                        const predictions = await tfModel.detect(scannedImg);
+                        scanLine.style.display = 'none';
+                        loadingText.style.display = 'none';
+
+                        let estVolume = 0;
+                        let detectedName = "Неизвестно";
+                        const validObject = predictions.find(p => ['bottle', 'cup', 'wine glass', 'bowl'].includes(p.class));
+
+                        if (validObject) {
+                            detectedName = validObject.class;
+                            if (detectedName === 'bottle') estVolume = 500;
+                            if (detectedName === 'cup') estVolume = 250;
+                            if (detectedName === 'wine glass') estVolume = 200;
+                            if (detectedName === 'bowl') estVolume = 400;
+
+                            detectedWaterAmount = estVolume;
+                            document.getElementById('aiClassLabel').innerText = `Найдено: ${detectedName}`;
+                            document.getElementById('aiResultVal').innerText = `~${detectedWaterAmount} мл`;
+                            document.getElementById('aiConfirmBtn').style.display = 'block';
+                        } else {
+                            detectedWaterAmount = 0;
+                            document.getElementById('aiClassLabel').innerText = `Посуда не найдена`;
+                            document.getElementById('aiResultVal').innerText = `0 мл`;
+                            document.getElementById('aiConfirmBtn').style.display = 'none';
+                        }
+                        resultCard.style.display = 'block';
+                        
+                    } catch (err) {
+                        scanLine.style.display = 'none';
+                        loadingText.innerText = "Ошибка нейросети";
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function confirmAiWater() {
+            if (detectedWaterAmount > 0) {
+                addWater(detectedWaterAmount);
+                aiOverlay.classList.remove('active');
+                resetAiScanner();
+            }
+        }
+
+        openSettingsBtn.addEventListener('click', () => settingsOverlay.classList.add('active'));
+        closeSettingsBtn.addEventListener('click', closeSettings);
+        settingsOverlay.addEventListener('click', (e) => { if (e.target === settingsOverlay) closeSettings(); });
+
+        function closeSettings() {
+            settingsOverlay.classList.remove('active');
+            let val = parseInt(dailyGoalInput.value);
+            if (isNaN(val) || val < 500) val = 2000;
+            dailyGoal = Math.min(val, 10000);
+            dailyGoalInput.value = dailyGoal;
+            saveState();
+            updateUI(false, currentWater);
+        }
+
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        let confettiParticles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class ConfettiParticle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height - canvas.height;
+                this.size = Math.random() * 8 + 6;
+                this.color = `hsl(${Math.random() * 360}, 80%, 60%)`;
+                this.speedX = Math.random() * 4 - 2;
+                this.speedY = Math.random() * 5 + 4;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 10 - 5;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.rotation += this.rotationSpeed;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        function triggerConfetti() {
+            confettiActive = true;
+            confettiParticles = Array.from({ length: 120 }, () => new ConfettiParticle());
+            animateConfetti();
+        }
+
+        function animateConfetti() {
+            if (!confettiActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let alive = false;
+            confettiParticles.forEach(p => {
+                p.update();
+                p.draw();
+                if (p.y < canvas.height) alive = true;
+            });
+            if (alive) requestAnimationFrame(animateConfetti);
+            else confettiActive = false;
+        }
+
+        loadState();
+    </script>
 </body>
 </html>
