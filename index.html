@@ -4,14 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>H2O Tracker</title>
+    
+    <!-- Real Browser Neural Network (TensorFlow.js + MobileNet) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@latest"></script>
+
     <style>
         :root {
             --bg-color: #fafbfc;
             --text-main: #2e353f;
             --text-secondary: #8e95a1;
-            --water-color-start: #3b82f6;
-            --water-color-end: #1d4ed8;
-            --accent-orange: #f97316;
+            --water-blue: #3b82f6;
+            --water-dark: #1d4ed8;
+            --water-light-bg: rgba(59, 130, 246, 0.1);
         }
 
         * {
@@ -51,11 +56,11 @@
             gap: 8px;
         }
 
-        /* Top Badges (Goal & Duolingo Streak) */
+        /* Water Streak Badge */
         .top-badge {
             background: rgba(255, 255, 255, 0.85);
             border: 1px solid rgba(46, 53, 63, 0.1);
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: 700;
@@ -64,13 +69,29 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.03);
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .top-badge:active {
+            transform: scale(0.94);
         }
 
         .top-badge.streak {
-            color: var(--accent-orange);
-            border-color: rgba(249, 115, 22, 0.2);
-            background: rgba(254, 243, 199, 0.5);
+            color: var(--water-dark);
+            border-color: rgba(59, 130, 246, 0.25);
+            background: var(--water-light-bg);
+        }
+
+        .droplet-icon {
+            display: inline-block;
+            animation: pulseDroplet 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseDroplet {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
         }
 
         .icon-btn {
@@ -276,6 +297,8 @@
             transform: translateY(100%);
             transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
             box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .overlay.active .sheet {
@@ -306,18 +329,90 @@
             cursor: pointer;
         }
 
-        .setting-input {
-            width: 100%;
-            background: #f1f3f5;
-            border: none;
-            padding: 16px;
-            border-radius: 12px;
+        /* Calendar Grid (Duolingo Style) */
+        .calendar-header {
+            text-align: center;
+            font-weight: 700;
             font-size: 16px;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            text-align: center;
+        }
+
+        .calendar-day-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            padding-bottom: 6px;
+        }
+
+        .calendar-cell {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            background: #f1f3f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
             font-weight: 600;
             color: var(--text-main);
-            outline: none;
+            position: relative;
+        }
+
+        .calendar-cell.completed {
+            background: #dbeafe;
+            color: var(--water-dark);
+            border: 1.5px solid var(--water-blue);
+        }
+
+        .calendar-cell.completed::after {
+            content: "💧";
+            font-size: 10px;
+            position: absolute;
+            bottom: 2px;
+        }
+
+        .calendar-cell.today {
+            box-shadow: 0 0 0 2px var(--text-main);
+        }
+
+        /* Duolingo Streak Celebration Card */
+        .streak-card {
             text-align: center;
-            margin-top: 8px;
+            padding: 20px 10px;
+        }
+
+        .streak-big-icon {
+            font-size: 70px;
+            display: inline-block;
+            animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .streak-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--water-dark);
+            margin: 10px 0 5px 0;
+        }
+
+        .streak-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-weight: 500;
         }
 
         /* AI Camera Scanner UI */
@@ -325,7 +420,7 @@
             position: relative;
             width: 100%;
             height: 220px;
-            background: #1e293b;
+            background: #0f172a;
             border-radius: 18px;
             overflow: hidden;
             display: flex;
@@ -352,12 +447,25 @@
             background: #3b82f6;
             box-shadow: 0 0 15px #3b82f6;
             display: none;
-            animation: scanAnim 1.8s infinite alternate ease-in-out;
+            animation: scanAnim 1.5s infinite alternate ease-in-out;
         }
 
         @keyframes scanAnim {
             0% { top: 5%; }
             100% { top: 90%; }
+        }
+
+        .ai-loading-text {
+            position: absolute;
+            bottom: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: none;
+            backdrop-filter: blur(4px);
         }
 
         .btn-primary {
@@ -388,13 +496,26 @@
         }
 
         .ai-result-val {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 800;
             color: #2563eb;
             margin: 4px 0 10px 0;
         }
 
-        /* Confetti Canvas */
+        .setting-input {
+            width: 100%;
+            background: #f1f3f5;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            outline: none;
+            text-align: center;
+            margin-top: 8px;
+        }
+
         #confetti {
             position: fixed;
             top: 0;
@@ -402,7 +523,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 99;
+            z-index: 150;
         }
     </style>
 </head>
@@ -413,15 +534,15 @@
     <!-- Top Navigation Header -->
     <div class="header">
         <div class="header-left">
-            <div class="top-badge streak" title="Ударный режим">
-                🔥 <span id="streakCount">0</span> дн.
+            <div class="top-badge streak" id="openStreakBtn" title="Календарь ударного режима">
+                <span class="droplet-icon">💧</span> <span id="streakCount">0</span> дн.
             </div>
             <div class="top-badge" title="Дневная цель">
                 🎯 <span id="headerGoal">2000</span> мл
             </div>
         </div>
         <div class="header-right">
-            <button class="icon-btn" id="openAiBtn" aria-label="AI Сканер" title="Сканировать стакан">🤖</button>
+            <button class="icon-btn" id="openAiBtn" aria-label="AI Сканер" title="Сканировать стакан нейросетью">🤖</button>
             <button class="icon-btn settings-btn" id="openSettingsBtn" aria-label="Настройки">
                 <svg viewBox="0 0 24 24">
                     <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
@@ -497,28 +618,48 @@
         </div>
     </div>
 
+    <!-- Calendar & Streak Modal Sheet -->
+    <div class="overlay" id="streakOverlay">
+        <div class="sheet">
+            <div class="sheet-header">
+                <span class="sheet-title">Ударный режим 💧</span>
+                <button class="sheet-close" id="closeStreakBtn">&times;</button>
+            </div>
+            
+            <div class="streak-card">
+                <div class="streak-big-icon">💧</div>
+                <div class="streak-title"><span id="modalStreakCount">0</span> Дней подряда</div>
+                <div class="streak-subtitle">Выполняйте норму воды каждый день!</div>
+            </div>
+
+            <div class="calendar-header" id="calendarMonthTitle">Август 2026</div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+    </div>
+
     <!-- AI Scanner Modal Sheet -->
     <div class="overlay" id="aiOverlay">
         <div class="sheet">
             <div class="sheet-header">
-                <span class="sheet-title">AI Сканер стакана 🤖</span>
+                <span class="sheet-title">TensorFlow AI Сканер 🤖</span>
                 <button class="sheet-close" id="closeAiBtn">&times;</button>
             </div>
             
             <div class="scanner-box" id="scannerBox">
                 <div class="scan-line" id="scanLine"></div>
-                <img id="scannedImg" style="display:none;">
-                <div id="scannerPlaceholder">📸 Сделайте фото стакана</div>
+                <img id="scannedImg" style="display:none;" crossorigin="anonymous">
+                <div id="scannerPlaceholder">📸 Сделайте фото емкости с водой</div>
+                <div class="ai-loading-text" id="aiLoadingText">Нейросеть сканирует...</div>
             </div>
 
             <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="processAiImage(event)">
             
-            <button class="btn-primary" onclick="document.getElementById('cameraInput').click()">Сфотографировать стакан</button>
+            <button class="btn-primary" id="btnScanPhoto" onclick="document.getElementById('cameraInput').click()">Сфотографировать емкость</button>
 
             <div class="ai-result-card" id="aiResultCard">
-                <div style="font-size:13px; color:#64748b; font-weight:600;">Распознанный объем:</div>
-                <div class="ai-result-val" id="aiResultVal">~280 мл</div>
-                <button class="btn-primary" onclick="confirmAiWater()" style="background:#16a34a;">Добавить в счетчик</button>
+                <div style="font-size:12px; color:#64748b; font-weight:700; text-transform:uppercase;" id="aiClassLabel">Распознанный объект</div>
+                <div class="ai-result-val" id="aiResultVal">~0 мл</div>
+                <button class="btn-primary" id="aiConfirmBtn" onclick="confirmAiWater()" style="background:#16a34a;">Добавить в счетчик</button>
             </div>
         </div>
     </div>
@@ -539,20 +680,22 @@
     </div>
 
     <script>
-        // App State
+        // State
         let currentWater = 0;
         let dailyGoal = 2000;
         let streak = 0;
-        let lastCompletedDate = null;
+        let completedDays = []; // Array of 'YYYY-MM-DD' strings
         let historyStack = [];
         let confettiActive = false;
         let detectedWaterAmount = 0;
+        let tfModel = null;
 
-        // Elements
+        // UI References
         const waterAmountEl = document.getElementById('waterAmount');
         const percentAmountEl = document.getElementById('percentAmount');
         const headerGoalEl = document.getElementById('headerGoal');
         const streakCountEl = document.getElementById('streakCount');
+        const modalStreakCountEl = document.getElementById('modalStreakCount');
         const waterFill = document.getElementById('water-fill');
         const waterSurface = document.getElementById('water-surface');
         const undoBtn = document.getElementById('undoBtn');
@@ -563,31 +706,34 @@
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         const dailyGoalInput = document.getElementById('dailyGoalInput');
 
+        const streakOverlay = document.getElementById('streakOverlay');
+        const openStreakBtn = document.getElementById('openStreakBtn');
+        const closeStreakBtn = document.getElementById('closeStreakBtn');
+
         const aiOverlay = document.getElementById('aiOverlay');
         const openAiBtn = document.getElementById('openAiBtn');
         const closeAiBtn = document.getElementById('closeAiBtn');
 
-        // Load state from localStorage
+        // Helper: Get ISO Date String (YYYY-MM-DD)
+        function getTodayStr() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        // Load Saved State
         function loadState() {
-            const today = new Date().toDateString();
+            const todayStr = getTodayStr();
             const savedDate = localStorage.getItem('h2o_date');
             
             dailyGoal = parseInt(localStorage.getItem('h2o_goal')) || 2000;
             streak = parseInt(localStorage.getItem('h2o_streak')) || 0;
-            lastCompletedDate = localStorage.getItem('h2o_last_completed') || null;
+            
+            try {
+                completedDays = JSON.parse(localStorage.getItem('h2o_completed_days')) || [];
+            } catch(e) { completedDays = []; }
 
-            // Check streak reset if missed a day
-            if (lastCompletedDate) {
-                const lastDate = new Date(lastCompletedDate);
-                const diffTime = Math.abs(new Date(today) - lastDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays > 1) {
-                    streak = 0; // Streak broken
-                }
-            }
-
-            if (savedDate !== today) {
-                localStorage.setItem('h2o_date', today);
+            if (savedDate !== todayStr) {
+                localStorage.setItem('h2o_date', todayStr);
                 currentWater = 0;
                 historyStack = [];
                 localStorage.setItem('h2o_current', '0');
@@ -607,12 +753,12 @@
             localStorage.setItem('h2o_current', currentWater.toString());
             localStorage.setItem('h2o_goal', dailyGoal.toString());
             localStorage.setItem('h2o_streak', streak.toString());
-            if (lastCompletedDate) localStorage.setItem('h2o_last_completed', lastCompletedDate);
+            localStorage.setItem('h2o_completed_days', JSON.stringify(completedDays));
             localStorage.setItem('h2o_history', JSON.stringify(historyStack));
-            localStorage.setItem('h2o_date', new Date().toDateString());
+            localStorage.setItem('h2o_date', getTodayStr());
         }
 
-        // Web Audio Sound Effect
+        // Web Audio Synthesizer
         function playBubbleSound() {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -622,8 +768,8 @@
                 const gain = audioCtx.createGain();
                 
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(180 + Math.random() * 40, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(420 + Math.random() * 60, audioCtx.currentTime + 0.18);
+                osc.frequency.setValueAtTime(190 + Math.random() * 40, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(450 + Math.random() * 60, audioCtx.currentTime + 0.18);
                 
                 gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
@@ -635,7 +781,7 @@
             } catch (e) {}
         }
 
-        // UI Render Engine
+        // UI Update Engine
         function updateUI(shouldPlaySound = true) {
             if (shouldPlaySound) playBubbleSound();
 
@@ -645,6 +791,7 @@
             percentAmountEl.innerText = `${percentage}% выпито`;
             headerGoalEl.innerText = `${dailyGoal}`;
             streakCountEl.innerText = `${streak}`;
+            modalStreakCountEl.innerText = `${streak}`;
 
             undoBtn.disabled = historyStack.length === 0;
 
@@ -663,13 +810,16 @@
             const targetRy = 8 + (fillFactor * (12 - 8));
             waterSurface.setAttribute('ry', targetRy.toString());
 
-            // Streak & Goal Check
-            const today = new Date().toDateString();
-            if (currentWater >= dailyGoal && lastCompletedDate !== today) {
-                lastCompletedDate = today;
+            // Check Streak Goal Completion
+            const todayStr = getTodayStr();
+            if (currentWater >= dailyGoal && !completedDays.includes(todayStr)) {
+                completedDays.push(todayStr);
                 streak += 1;
                 streakCountEl.innerText = streak;
                 saveState();
+                
+                // Show celebration Duolingo popup
+                openStreakModal();
                 if (!confettiActive) triggerConfetti();
             }
         }
@@ -691,7 +841,7 @@
             window.requestAnimationFrame(step);
         }
 
-        // Actions
+        // Interactive Actions
         function addWater(amount) {
             currentWater += amount;
             historyStack.push(amount);
@@ -728,35 +878,133 @@
             addWater(250);
         }
 
-        // AI Scanner Logic
+        // Calendar Generator
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            
+            const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+            document.getElementById('calendarMonthTitle').innerText = `${monthNames[month]} ${year}`;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const dayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+            dayLabels.forEach(d => {
+                const el = document.createElement('div');
+                el.className = 'calendar-day-label';
+                el.innerText = d;
+                grid.appendChild(el);
+            });
+
+            const todayNum = now.getDate();
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                cell.innerText = day;
+
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                if (completedDays.includes(dateKey)) {
+                    cell.classList.add('completed');
+                }
+
+                if (day === todayNum) {
+                    cell.classList.add('today');
+                }
+
+                grid.appendChild(cell);
+            }
+        }
+
+        function openStreakModal() {
+            renderCalendar();
+            streakOverlay.classList.add('active');
+        }
+
+        openStreakBtn.addEventListener('click', openStreakModal);
+        closeStreakBtn.addEventListener('click', () => streakOverlay.classList.remove('active'));
+
+        // Real TensorFlow.js AI Neural Network Processing
         openAiBtn.addEventListener('click', () => aiOverlay.classList.add('active'));
         closeAiBtn.addEventListener('click', () => aiOverlay.classList.remove('active'));
 
-        function processAiImage(event) {
+        async function processAiImage(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
             const scannedImg = document.getElementById('scannedImg');
             const placeholder = document.getElementById('scannerPlaceholder');
             const scanLine = document.getElementById('scanLine');
+            const loadingText = document.getElementById('aiLoadingText');
             const resultCard = document.getElementById('aiResultCard');
 
-            reader.onload = function(e) {
+            const reader = new FileReader();
+            reader.onload = async function(e) {
                 scannedImg.src = e.target.result;
                 scannedImg.style.display = 'block';
                 placeholder.style.display = 'none';
                 scanLine.style.display = 'block';
+                loadingText.innerText = "Нейросеть TF.js сканирует...";
+                loadingText.style.display = 'block';
                 resultCard.style.display = 'none';
 
-                // Simulate Neural Network analysis scan animation
-                setTimeout(() => {
-                    scanLine.style.display = 'none';
-                    // Calculate smart neural estimation (200ml - 450ml range rounded to 10ml)
-                    detectedWaterAmount = Math.floor(Math.random() * (45 - 20) + 20) * 10;
-                    document.getElementById('aiResultVal').innerText = `~${detectedWaterAmount} мл`;
-                    resultCard.style.display = 'block';
-                }, 1800);
+                // Load MobileNet model if not loaded
+                scannedImg.onload = async () => {
+                    try {
+                        if (!tfModel) {
+                            tfModel = await mobilenet.load();
+                        }
+                        
+                        // Perform REAL inference on pixels
+                        const predictions = await tfModel.classify(scannedImg);
+                        scanLine.style.display = 'none';
+                        loadingText.style.display = 'none';
+
+                        console.log("TF Predictions:", predictions);
+
+                        if (predictions && predictions.length > 0) {
+                            const topClass = predictions[0].className.toLowerCase();
+                            
+                            // Map recognized classes to realistic liquid capacities
+                            let estVolume = 0;
+                            let detectedName = predictions[0].className.split(',')[0];
+
+                            if (topClass.includes('bottle') || topClass.includes('pop bottle') || topClass.includes('water bottle')) {
+                                estVolume = 500;
+                            } else if (topClass.includes('cup') || topClass.includes('mug') || topClass.includes('espresso')) {
+                                estVolume = 250;
+                            } else if (topClass.includes('glass') || topClass.includes('goblet') || topClass.includes('wine') || topClass.includes('cocktail')) {
+                                estVolume = 200;
+                            } else if (topClass.includes('pitcher') || topClass.includes('beaker') || topClass.includes('jug')) {
+                                estVolume = 1000;
+                            } else if (topClass.includes('measuring cup') || topClass.includes('bucket')) {
+                                estVolume = 350;
+                            }
+
+                            if (estVolume > 0) {
+                                detectedWaterAmount = estVolume;
+                                document.getElementById('aiClassLabel').innerText = `Нейросеть распознала: ${detectedName}`;
+                                document.getElementById('aiResultVal').innerText = `~${detectedWaterAmount} мл`;
+                                document.getElementById('aiConfirmBtn').style.display = 'block';
+                            } else {
+                                detectedWaterAmount = 0;
+                                document.getElementById('aiClassLabel').innerText = `Не похоже на посуду для воды (${detectedName})`;
+                                document.getElementById('aiResultVal').innerText = `Емкость не найдена`;
+                                document.getElementById('aiConfirmBtn').style.display = 'none';
+                            }
+                            resultCard.style.display = 'block';
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        scanLine.style.display = 'none';
+                        loadingText.innerText = "Ошибка обработки фото";
+                    }
+                };
             };
             reader.readAsDataURL(file);
         }
@@ -768,7 +1016,7 @@
             }
         }
 
-        // Settings Sheet
+        // Settings Sheet Handlers
         openSettingsBtn.addEventListener('click', () => settingsOverlay.classList.add('active'));
         closeSettingsBtn.addEventListener('click', closeSettings);
         settingsOverlay.addEventListener('click', (e) => { if (e.target === settingsOverlay) closeSettings(); });
@@ -783,7 +1031,7 @@
             updateUI(false);
         }
 
-        // Confetti Canvas Animation
+        // Confetti Engine
         const canvas = document.getElementById('confetti');
         const ctx = canvas.getContext('2d');
         let confettiParticles = [];
