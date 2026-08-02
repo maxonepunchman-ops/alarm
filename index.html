@@ -1,3 +1,9 @@
+Вот готовый обновленный код index.html.
+Что было доработано в этой версии:
+ * Фикс для iOS Safari: Добавлены динамические отступы (env(safe-area-inset-bottom)), чтобы плавающая панель Safari больше не перекрывала статус и кнопки.
+ * Кнопка «Отменить» (Undo): Появилась кнопка отмены последнего действия. Если случайно нажал на стакан или добавил лишнее, можно откатить добавление назад без сброса дня.
+ * Кнопка «+ Свой»: Добавлена возможность вводить произвольное количество воды (например, 330 мл).
+ * Адаптивный размер шрифта: Цифры объёма теперь автоматически масштабируются под размер экрана, поэтому даже большие значения (10 000+ мл) больше не упираются в края.
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -31,7 +37,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            padding: calc(40px + env(safe-area-inset-top)) 20px calc(30px + env(safe-area-inset-bottom)) 20px;
+            padding: calc(30px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)) 20px;
             overflow: hidden;
         }
 
@@ -42,7 +48,7 @@
             display: flex;
             justify-content: flex-end;
             position: absolute;
-            top: calc(20px + env(safe-area-inset-top));
+            top: calc(15px + env(safe-area-inset-top));
             right: 25px;
             z-index: 10;
         }
@@ -69,12 +75,20 @@
         /* Stats Display */
         .stats-container {
             text-align: center;
-            margin-top: 40px;
+            margin-top: 30px;
             z-index: 2;
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .ml-display-wrapper {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
         }
 
         .ml-display {
-            font-size: 76px;
+            font-size: min(15vw, 72px);
             font-weight: 800;
             letter-spacing: -2px;
             background: linear-gradient(180deg, var(--text-main) 0%, #111827 100%);
@@ -85,18 +99,18 @@
         }
 
         .unit-label {
-            font-size: 38px;
+            font-size: clamp(22px, 5vw, 36px);
             font-weight: 700;
             color: var(--text-main);
-            margin-left: 5px;
+            margin-left: 6px;
             vertical-align: baseline;
         }
 
         .percentage-display {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             color: var(--text-secondary);
-            margin-top: 8px;
+            margin-top: 6px;
             letter-spacing: -0.5px;
         }
 
@@ -104,8 +118,8 @@
         .glass-wrapper {
             position: relative;
             width: 100%;
-            max-width: 280px;
-            height: 420px;
+            max-width: 260px;
+            height: 360px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -132,21 +146,21 @@
             flex-direction: column;
             gap: 12px;
             z-index: 5;
+            margin-bottom: calc(15px + env(safe-area-inset-bottom));
         }
 
         .quick-add-row {
-            display: flex;
-            gap: 10px;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
         }
 
         .btn-add {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.75);
             border: 1.5px solid rgba(46, 53, 63, 0.15);
-            padding: 14px 0;
-            border-radius: 16px;
-            font-size: 15px;
+            padding: 12px 0;
+            border-radius: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--text-main);
             backdrop-filter: blur(8px);
@@ -154,6 +168,9 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-add:active {
@@ -163,11 +180,41 @@
             border-color: var(--text-main);
         }
 
+        .btn-secondary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+        }
+
+        .btn-undo {
+            background: none;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background 0.2s, opacity 0.2s;
+        }
+
+        .btn-undo:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .btn-undo:not(:disabled):active {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
         .goal-indicator {
-            text-align: center;
             font-size: 13px;
             color: var(--text-secondary);
-            font-weight: 500;
+            font-weight: 600;
         }
 
         /* Settings Slide-up Panel (iOS Style Sheet) */
@@ -306,7 +353,7 @@
 
     <!-- Stats Display -->
     <div class="stats-container">
-        <div>
+        <div class="ml-display-wrapper">
             <span class="ml-display" id="waterAmount">0</span>
             <span class="unit-label">мл</span>
         </div>
@@ -347,21 +394,17 @@
                 <!-- Main Rising Liquid Block -->
                 <rect id="water-fill" x="0" y="462" width="300" height="384" fill="url(#water-grad)" style="transition: y 0.8s cubic-bezier(0.25, 1, 0.5, 1);" />
                 
-                <!-- 3D Liquid Surface Ellipse (Moves vertically with the fill) -->
+                <!-- 3D Liquid Surface Ellipse -->
                 <ellipse id="water-surface" cx="150" cy="462" rx="65" ry="8" fill="#60a5fa" opacity="0.9" style="transition: cy 0.8s cubic-bezier(0.25, 1, 0.5, 1), rx 0.8s cubic-bezier(0.25, 1, 0.5, 1), ry 0.8s cubic-bezier(0.25, 1, 0.5, 1);" />
             </g>
 
-            <!-- Back Rim of the Glass (Provides depth) -->
+            <!-- Back Rim of the Glass -->
             <path d="M 45,80 A 105,12 0 0 1 255,80" fill="none" stroke="rgba(46, 53, 63, 0.15)" stroke-width="1.5" />
 
             <!-- Thick Realistic Glass Outline -->
-            <!-- Left border -->
             <line x1="45" y1="80" x2="85" y2="460" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
-            <!-- Right border -->
             <line x1="255" y1="80" x2="215" y2="460" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
-            <!-- Bottom Rim Ellipse -->
             <ellipse cx="150" cy="460" rx="65" ry="8" fill="none" stroke="var(--text-main)" stroke-width="3.5" opacity="0.85" />
-            <!-- Front Top Rim Ellipse -->
             <path d="M 45,80 A 105,12 0 0 0 255,80" fill="none" stroke="var(--text-main)" stroke-width="3" opacity="0.85" />
 
             <!-- Glossy Highlight Overlay -->
@@ -372,14 +415,22 @@
     <!-- Native Feel Control Dashboard -->
     <div class="controls">
         <div class="quick-add-row">
-            <button class="btn-add" onclick="addWater(150)">+ 150 мл</button>
-            <button class="btn-add" onclick="addWater(250)">+ 250 мл</button>
-            <button class="btn-add" onclick="addWater(500)">+ 500 мл</button>
+            <button class="btn-add" onclick="addWater(150)">+150</button>
+            <button class="btn-add" onclick="addWater(250)">+250</button>
+            <button class="btn-add" onclick="addWater(500)">+500</button>
+            <button class="btn-add" onclick="addCustomWater()">+ Свой</button>
         </div>
-        <div class="goal-indicator" id="goalStatus">Цель: 2000 мл</div>
+        
+        <div class="btn-secondary-row">
+            <button class="btn-undo" id="undoBtn" onclick="undoLastAction()" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                Отменить
+            </button>
+            <div class="goal-indicator" id="goalStatus">Цель: 2000 мл</div>
+        </div>
     </div>
 
-    <!-- IOS Style Settings Drawer Sheet -->
+    <!-- iOS Style Settings Drawer Sheet -->
     <div class="settings-overlay" id="settingsOverlay">
         <div class="settings-sheet">
             <div class="sheet-header">
@@ -402,6 +453,7 @@
         // State variables
         let currentWater = 0;
         let dailyGoal = 2000;
+        let historyStack = [];
         let confettiActive = false;
 
         // Elements
@@ -410,6 +462,7 @@
         const goalStatusEl = document.getElementById('goalStatus');
         const waterFill = document.getElementById('water-fill');
         const waterSurface = document.getElementById('water-surface');
+        const undoBtn = document.getElementById('undoBtn');
         
         // Settings elements
         const settingsOverlay = document.getElementById('settingsOverlay');
@@ -438,9 +491,16 @@
             if (savedDate !== today) {
                 localStorage.setItem('h2o_date', today);
                 currentWater = 0;
+                historyStack = [];
                 localStorage.setItem('h2o_current', '0');
+                localStorage.setItem('h2o_history', '[]');
             } else {
                 currentWater = parseInt(localStorage.getItem('h2o_current')) || 0;
+                try {
+                    historyStack = JSON.parse(localStorage.getItem('h2o_history')) || [];
+                } catch(e) {
+                    historyStack = [];
+                }
             }
             
             dailyGoal = parseInt(localStorage.getItem('h2o_goal')) || 2000;
@@ -453,10 +513,11 @@
         function saveState() {
             localStorage.setItem('h2o_current', currentWater.toString());
             localStorage.setItem('h2o_goal', dailyGoal.toString());
+            localStorage.setItem('h2o_history', JSON.stringify(historyStack));
             localStorage.setItem('h2o_date', new Date().toDateString());
         }
 
-        // Procedural iOS Haptic Wave Sound Synthesis (Web Audio API)
+        // Procedural iOS Sound Synthesis (Web Audio API)
         function playWaterBubbleSound() {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -468,7 +529,6 @@
                 
                 osc.type = 'sine';
                 
-                // Low water splash bubble sound effect (frequency sweep up)
                 const pitchStart = 160 + Math.random() * 40;
                 const pitchEnd = 380 + Math.random() * 80;
                 
@@ -492,60 +552,53 @@
         function updateUI(shouldPlaySound = true) {
             if (shouldPlaySound) playWaterBubbleSound();
 
-            // Calculate percentage
             const percentage = Math.min(Math.round((currentWater / dailyGoal) * 100), 100);
             
-            // Animate number counting smoothly
             animateCounter('waterAmount', parseInt(waterAmountEl.innerText) || 0, currentWater);
             percentAmountEl.innerText = `${percentage}% выпито`;
             goalStatusEl.innerText = `Цель: ${dailyGoal} мл`;
+
+            // Enable / Disable Undo button
+            undoBtn.disabled = historyStack.length === 0;
 
             // SVG Water coordinates calculation
             const bottomY = 462;
             const topY = 85;
             const liquidRange = bottomY - topY;
             
-            // Percent fluid volume height
             const fillFactor = Math.min(currentWater / dailyGoal, 1.0);
             const targetY = bottomY - (fillFactor * liquidRange);
             
-            // Move liquid volume upward
             waterFill.setAttribute('y', targetY.toString());
-            
-            // Move 3D Liquid Surface Ellipse
             waterSurface.setAttribute('cy', targetY.toString());
             
-            // Dynamically scale ellipse width based on glass tapering
             const bottomRx = 65;
             const topRx = 105;
             const targetRx = bottomRx + (fillFactor * (topRx - bottomRx));
             waterSurface.setAttribute('rx', targetRx.toString());
 
-            // Tapered Ellipse vertical radius (perspective depth)
             const bottomRy = 8;
             const topRy = 12;
             const targetRy = bottomRy + (fillFactor * (topRy - bottomRy));
             waterSurface.setAttribute('ry', targetRy.toString());
 
-            // Check and trigger goal complete
             if (currentWater >= dailyGoal && !confettiActive) {
                 triggerConfetti();
             }
         }
 
-        // Standard dynamic counter increment
+        // Counter animation
         function animateCounter(elementId, start, end) {
             const obj = document.getElementById(elementId);
             const range = end - start;
             if (range === 0) return;
             
-            const duration = 800; // ms
+            const duration = 600;
             let startTime = null;
 
             function step(timestamp) {
                 if (!startTime) startTime = timestamp;
                 const progress = Math.min((timestamp - startTime) / duration, 1);
-                // Ease Out Quad formula
                 const easeProgress = progress * (2 - progress);
                 obj.innerText = Math.floor(start + easeProgress * range);
                 if (progress < 1) {
@@ -557,11 +610,30 @@
             window.requestAnimationFrame(step);
         }
 
-        // Interface events
+        // Actions
         function addWater(amount) {
             currentWater += amount;
+            historyStack.push(amount);
             saveState();
             updateUI(true);
+        }
+
+        function addCustomWater() {
+            const input = prompt("Введите количество воды (в мл):", "300");
+            if (input !== null) {
+                const val = parseInt(input.trim());
+                if (!isNaN(val) && val > 0 && val <= 5000) {
+                    addWater(val);
+                }
+            }
+        }
+
+        function undoLastAction() {
+            if (historyStack.length === 0) return;
+            const lastAmount = historyStack.pop();
+            currentWater = Math.max(0, currentWater - lastAmount);
+            saveState();
+            updateUI(false);
         }
 
         function handleGlassTap() {
@@ -571,6 +643,7 @@
         function resetApp() {
             if (confirm("Вы уверены, что хотите обнулить счетчик воды на сегодня?")) {
                 currentWater = 0;
+                historyStack = [];
                 saveState();
                 updateUI(false);
                 closeSettings();
@@ -590,7 +663,6 @@
         function closeSettings() {
             settingsOverlay.classList.remove('active');
             
-            // Validate and save new goal
             let val = parseInt(dailyGoalInput.value);
             if (isNaN(val) || val < 500) val = 2000;
             if (val > 10000) val = 10000;
@@ -601,7 +673,7 @@
             updateUI(false);
         }
 
-        // Particle Class for Celebratory Confetti Splash
+        // Particle Class for Celebratory Confetti
         class ConfettiParticle {
             constructor() {
                 this.x = Math.random() * canvas.width;
@@ -663,3 +735,4 @@
     </script>
 </body>
 </html>
+
