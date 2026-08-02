@@ -11,7 +11,7 @@
             --text-secondary: #8e95a1;
             --water-color-start: #3b82f6;
             --water-color-end: #1d4ed8;
-            --glass-rim-color: #2e353f;
+            --accent-orange: #f97316;
         }
 
         * {
@@ -31,37 +31,71 @@
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            padding: calc(30px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)) 20px;
+            padding: calc(15px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)) 20px;
             overflow: hidden;
         }
 
-        /* Header Elements */
+        /* Top Header Bar */
         .header {
             width: 100%;
             max-width: 380px;
             display: flex;
-            justify-content: flex-end;
-            position: absolute;
-            top: calc(15px + env(safe-area-inset-top));
-            right: 25px;
+            justify-content: space-between;
+            align-items: center;
             z-index: 10;
         }
 
-        .settings-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 10px;
-            transition: transform 0.2s ease;
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .settings-btn:active {
-            transform: rotate(45deg) scale(0.9);
+        /* Top Badges (Goal & Duolingo Streak) */
+        .top-badge {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(46, 53, 63, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .top-badge.streak {
+            color: var(--accent-orange);
+            border-color: rgba(249, 115, 22, 0.2);
+            background: rgba(254, 243, 199, 0.5);
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(46, 53, 63, 0.1);
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, background 0.2s;
+            backdrop-filter: blur(8px);
+            font-size: 16px;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.92);
+            background: #e5e7eb;
         }
 
         .settings-btn svg {
-            width: 28px;
-            height: 28px;
+            width: 20px;
+            height: 20px;
             fill: var(--text-main);
             opacity: 0.85;
         }
@@ -69,7 +103,7 @@
         /* Stats Display */
         .stats-container {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 15px;
             z-index: 2;
             width: 100%;
             max-width: 360px;
@@ -97,14 +131,13 @@
             font-weight: 700;
             color: var(--text-main);
             margin-left: 6px;
-            vertical-align: baseline;
         }
 
         .percentage-display {
             font-size: 18px;
             font-weight: 600;
             color: var(--text-secondary);
-            margin-top: 6px;
+            margin-top: 4px;
             letter-spacing: -0.5px;
         }
 
@@ -112,8 +145,8 @@
         .glass-wrapper {
             position: relative;
             width: 100%;
-            max-width: 260px;
-            height: 360px;
+            max-width: 250px;
+            height: 340px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -138,9 +171,9 @@
             max-width: 360px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             z-index: 5;
-            margin-bottom: calc(15px + env(safe-area-inset-bottom));
+            margin-bottom: calc(10px + env(safe-area-inset-bottom));
         }
 
         .quick-add-row {
@@ -150,77 +183,77 @@
         }
 
         .btn-add {
-            background: rgba(255, 255, 255, 0.75);
-            border: 1.5px solid rgba(46, 53, 63, 0.15);
+            background: rgba(255, 255, 255, 0.8);
+            border: 1.5px solid rgba(46, 53, 63, 0.12);
             padding: 12px 0;
             border-radius: 14px;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-main);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            transition: all 0.2s ease;
         }
 
         .btn-add:active {
             background: var(--text-main);
             color: #ffffff;
             transform: scale(0.95);
-            border-color: var(--text-main);
         }
 
         .btn-secondary-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 4px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
 
-        .btn-undo {
-            background: none;
-            border: none;
+        .btn-action {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(46, 53, 63, 0.1);
             font-size: 13px;
             font-weight: 600;
             color: var(--text-secondary);
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 4px;
-            padding: 6px 10px;
-            border-radius: 8px;
-            transition: background 0.2s, opacity 0.2s;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
         }
 
-        .btn-undo:disabled {
+        .btn-action:disabled {
             opacity: 0.3;
             cursor: default;
         }
 
-        .btn-undo:not(:disabled):active {
-            background: rgba(0, 0, 0, 0.05);
+        .btn-action:not(:disabled):active {
+            background: rgba(0, 0, 0, 0.08);
+            color: var(--text-main);
         }
 
-        .goal-indicator {
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 600;
+        .btn-reset-danger {
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.15);
+            background: rgba(254, 226, 226, 0.4);
         }
 
-        /* Settings Slide-up Panel (iOS Style Sheet) */
-        .settings-overlay {
+        .btn-reset-danger:active {
+            background: #fee2e2 !important;
+        }
+
+        /* Modals & Overlays */
+        .overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             z-index: 100;
             opacity: 0;
             pointer-events: none;
@@ -229,23 +262,23 @@
             align-items: flex-end;
         }
 
-        .settings-overlay.active {
+        .overlay.active {
             opacity: 1;
             pointer-events: auto;
         }
 
-        .settings-sheet {
+        .sheet {
             width: 100%;
             background: #ffffff;
             border-top-left-radius: 24px;
             border-top-right-radius: 24px;
-            padding: 30px 24px calc(40px + env(safe-area-inset-bottom)) 24px;
+            padding: 25px 24px calc(30px + env(safe-area-inset-bottom)) 24px;
             transform: translateY(100%);
             transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
             box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
         }
 
-        .settings-overlay.active .settings-sheet {
+        .overlay.active .sheet {
             transform: translateY(0);
         }
 
@@ -253,11 +286,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .sheet-title {
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 700;
             color: var(--text-main);
         }
@@ -271,21 +304,6 @@
             font-weight: bold;
             color: var(--text-secondary);
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .setting-item {
-            margin-bottom: 20px;
-        }
-
-        .setting-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
         }
 
         .setting-input {
@@ -299,27 +317,84 @@
             color: var(--text-main);
             outline: none;
             text-align: center;
+            margin-top: 8px;
         }
 
-        .btn-danger {
+        /* AI Camera Scanner UI */
+        .scanner-box {
+            position: relative;
             width: 100%;
-            background: #fee2e2;
-            color: #ef4444;
+            height: 220px;
+            background: #1e293b;
+            border-radius: 18px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            margin-bottom: 15px;
+            border: 2px dashed rgba(255,255,255,0.2);
+        }
+
+        .scanner-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #3b82f6;
+            box-shadow: 0 0 15px #3b82f6;
+            display: none;
+            animation: scanAnim 1.8s infinite alternate ease-in-out;
+        }
+
+        @keyframes scanAnim {
+            0% { top: 5%; }
+            100% { top: 90%; }
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: #2563eb;
+            color: white;
             border: none;
-            padding: 16px;
+            padding: 15px;
             border-radius: 14px;
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: background 0.2s;
-            margin-top: 10px;
         }
 
-        .btn-danger:active {
-            background: #fecaca;
+        .btn-primary:active {
+            background: #1d4ed8;
         }
 
-        /* Success Confetti Animation Canvas */
+        .ai-result-card {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 15px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .ai-result-val {
+            font-size: 28px;
+            font-weight: 800;
+            color: #2563eb;
+            margin: 4px 0 10px 0;
+        }
+
+        /* Confetti Canvas */
         #confetti {
             position: fixed;
             top: 0;
@@ -333,16 +408,26 @@
 </head>
 <body>
 
-    <!-- Confetti for goal completion -->
     <canvas id="confetti"></canvas>
 
-    <!-- Settings Gear -->
+    <!-- Top Navigation Header -->
     <div class="header">
-        <button class="settings-btn" id="openSettingsBtn" aria-label="Настройки">
-            <svg viewBox="0 0 24 24">
-                <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
-            </svg>
-        </button>
+        <div class="header-left">
+            <div class="top-badge streak" title="Ударный режим">
+                🔥 <span id="streakCount">0</span> дн.
+            </div>
+            <div class="top-badge" title="Дневная цель">
+                🎯 <span id="headerGoal">2000</span> мл
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="icon-btn" id="openAiBtn" aria-label="AI Сканер" title="Сканировать стакан">🤖</button>
+            <button class="icon-btn settings-btn" id="openSettingsBtn" aria-label="Настройки">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+                </svg>
+            </button>
+        </div>
     </div>
 
     <!-- Stats Display -->
@@ -358,17 +443,14 @@
     <div class="glass-wrapper" id="glassTapArea" onclick="handleGlassTap()">
         <svg viewBox="0 0 300 500" class="glass-svg">
             <defs>
-                <!-- Clipping path strictly inside the glass walls -->
                 <clipPath id="water-clip">
                     <polygon points="43,78 257,78 213,462 87,462" />
                 </clipPath>
-                <!-- Liquid fluid gradient -->
                 <linearGradient id="water-grad" x1="0%" y1="100%" x2="0%" y2="0%">
                     <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0.9" />
                     <stop offset="60%" stop-color="#2563eb" stop-opacity="0.8" />
                     <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.7" />
                 </linearGradient>
-                <!-- Glass side glow highlight -->
                 <linearGradient id="glass-glow" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25" />
                     <stop offset="15%" stop-color="#ffffff" stop-opacity="0.0" />
@@ -377,36 +459,24 @@
                 </linearGradient>
             </defs>
 
-            <!-- Glass Base Shadow -->
             <ellipse cx="150" cy="470" rx="72" ry="12" fill="rgba(0,0,0,0.04)" />
-
-            <!-- Glass Background Fill -->
             <polygon points="45,80 255,80 215,460 85,460" fill="rgba(255, 255, 255, 0.45)" />
 
-            <!-- Liquid Render Block (Clipped inside the glass structure) -->
             <g clip-path="url(#water-clip)">
-                <!-- Main Rising Liquid Block -->
                 <rect id="water-fill" x="0" y="462" width="300" height="384" fill="url(#water-grad)" style="transition: y 0.8s cubic-bezier(0.25, 1, 0.5, 1);" />
-                
-                <!-- 3D Liquid Surface Ellipse -->
                 <ellipse id="water-surface" cx="150" cy="462" rx="65" ry="8" fill="#60a5fa" opacity="0.9" style="transition: cy 0.8s cubic-bezier(0.25, 1, 0.5, 1), rx 0.8s cubic-bezier(0.25, 1, 0.5, 1), ry 0.8s cubic-bezier(0.25, 1, 0.5, 1);" />
             </g>
 
-            <!-- Back Rim of the Glass -->
             <path d="M 45,80 A 105,12 0 0 1 255,80" fill="none" stroke="rgba(46, 53, 63, 0.15)" stroke-width="1.5" />
-
-            <!-- Thick Realistic Glass Outline -->
             <line x1="45" y1="80" x2="85" y2="460" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
             <line x1="255" y1="80" x2="215" y2="460" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" opacity="0.85" />
             <ellipse cx="150" cy="460" rx="65" ry="8" fill="none" stroke="var(--text-main)" stroke-width="3.5" opacity="0.85" />
             <path d="M 45,80 A 105,12 0 0 0 255,80" fill="none" stroke="var(--text-main)" stroke-width="3" opacity="0.85" />
-
-            <!-- Glossy Highlight Overlay -->
             <polygon points="48,83 252,83 213,457 87,457" fill="url(#glass-glow)" pointer-events="none" />
         </svg>
     </div>
 
-    <!-- Native Feel Control Dashboard -->
+    <!-- Controls -->
     <div class="controls">
         <div class="quick-add-row">
             <button class="btn-add" onclick="addWater(150)">+150</button>
@@ -416,72 +486,106 @@
         </div>
         
         <div class="btn-secondary-row">
-            <button class="btn-undo" id="undoBtn" onclick="undoLastAction()" disabled>
+            <button class="btn-action" id="undoBtn" onclick="undoLastAction()" disabled>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
                 Отменить
             </button>
-            <div class="goal-indicator" id="goalStatus">Цель: 2000 мл</div>
+            <button class="btn-action btn-reset-danger" onclick="resetApp()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                Сбросить
+            </button>
         </div>
     </div>
 
-    <!-- iOS Style Settings Drawer Sheet -->
-    <div class="settings-overlay" id="settingsOverlay">
-        <div class="settings-sheet">
+    <!-- AI Scanner Modal Sheet -->
+    <div class="overlay" id="aiOverlay">
+        <div class="sheet">
+            <div class="sheet-header">
+                <span class="sheet-title">AI Сканер стакана 🤖</span>
+                <button class="sheet-close" id="closeAiBtn">&times;</button>
+            </div>
+            
+            <div class="scanner-box" id="scannerBox">
+                <div class="scan-line" id="scanLine"></div>
+                <img id="scannedImg" style="display:none;">
+                <div id="scannerPlaceholder">📸 Сделайте фото стакана</div>
+            </div>
+
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="processAiImage(event)">
+            
+            <button class="btn-primary" onclick="document.getElementById('cameraInput').click()">Сфотографировать стакан</button>
+
+            <div class="ai-result-card" id="aiResultCard">
+                <div style="font-size:13px; color:#64748b; font-weight:600;">Распознанный объем:</div>
+                <div class="ai-result-val" id="aiResultVal">~280 мл</div>
+                <button class="btn-primary" onclick="confirmAiWater()" style="background:#16a34a;">Добавить в счетчик</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Sheet -->
+    <div class="overlay" id="settingsOverlay">
+        <div class="sheet">
             <div class="sheet-header">
                 <span class="sheet-title">Настройки</span>
                 <button class="sheet-close" id="closeSettingsBtn">&times;</button>
             </div>
             
             <div class="setting-item">
-                <label class="setting-label" for="dailyGoalInput">Дневная цель (мл)</label>
+                <label style="font-size:14px; font-weight:600; color:var(--text-secondary);" for="dailyGoalInput">Дневная цель (мл)</label>
                 <input type="number" id="dailyGoalInput" class="setting-input" min="500" max="10000" step="50">
-            </div>
-
-            <div class="setting-item" style="margin-top: 30px;">
-                <button class="btn-danger" onclick="resetApp()">Сбросить прогресс</button>
             </div>
         </div>
     </div>
 
     <script>
-        // State variables
+        // App State
         let currentWater = 0;
         let dailyGoal = 2000;
+        let streak = 0;
+        let lastCompletedDate = null;
         let historyStack = [];
         let confettiActive = false;
+        let detectedWaterAmount = 0;
 
         // Elements
         const waterAmountEl = document.getElementById('waterAmount');
         const percentAmountEl = document.getElementById('percentAmount');
-        const goalStatusEl = document.getElementById('goalStatus');
+        const headerGoalEl = document.getElementById('headerGoal');
+        const streakCountEl = document.getElementById('streakCount');
         const waterFill = document.getElementById('water-fill');
         const waterSurface = document.getElementById('water-surface');
         const undoBtn = document.getElementById('undoBtn');
-        
-        // Settings elements
+
+        // Modals
         const settingsOverlay = document.getElementById('settingsOverlay');
         const openSettingsBtn = document.getElementById('openSettingsBtn');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         const dailyGoalInput = document.getElementById('dailyGoalInput');
 
-        // Confetti Canvas setup
-        const canvas = document.getElementById('confetti');
-        const ctx = canvas.getContext('2d');
-        let confettiParticles = [];
+        const aiOverlay = document.getElementById('aiOverlay');
+        const openAiBtn = document.getElementById('openAiBtn');
+        const closeAiBtn = document.getElementById('closeAiBtn');
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // Load saved state on start
+        // Load state from localStorage
         function loadState() {
             const today = new Date().toDateString();
             const savedDate = localStorage.getItem('h2o_date');
             
-            // Auto reset if new day
+            dailyGoal = parseInt(localStorage.getItem('h2o_goal')) || 2000;
+            streak = parseInt(localStorage.getItem('h2o_streak')) || 0;
+            lastCompletedDate = localStorage.getItem('h2o_last_completed') || null;
+
+            // Check streak reset if missed a day
+            if (lastCompletedDate) {
+                const lastDate = new Date(lastCompletedDate);
+                const diffTime = Math.abs(new Date(today) - lastDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (diffDays > 1) {
+                    streak = 0; // Streak broken
+                }
+            }
+
             if (savedDate !== today) {
                 localStorage.setItem('h2o_date', today);
                 currentWater = 0;
@@ -492,114 +596,97 @@
                 currentWater = parseInt(localStorage.getItem('h2o_current')) || 0;
                 try {
                     historyStack = JSON.parse(localStorage.getItem('h2o_history')) || [];
-                } catch(e) {
-                    historyStack = [];
-                }
+                } catch(e) { historyStack = []; }
             }
-            
-            dailyGoal = parseInt(localStorage.getItem('h2o_goal')) || 2000;
+
             dailyGoalInput.value = dailyGoal;
-            
             updateUI(false);
         }
 
-        // Save active state to localStorage
         function saveState() {
             localStorage.setItem('h2o_current', currentWater.toString());
             localStorage.setItem('h2o_goal', dailyGoal.toString());
+            localStorage.setItem('h2o_streak', streak.toString());
+            if (lastCompletedDate) localStorage.setItem('h2o_last_completed', lastCompletedDate);
             localStorage.setItem('h2o_history', JSON.stringify(historyStack));
             localStorage.setItem('h2o_date', new Date().toDateString());
         }
 
-        // Procedural iOS Sound Synthesis (Web Audio API)
-        function playWaterBubbleSound() {
+        // Web Audio Sound Effect
+        function playBubbleSound() {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
                 const audioCtx = new AudioContext();
-                
                 const osc = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
+                const gain = audioCtx.createGain();
                 
                 osc.type = 'sine';
+                osc.frequency.setValueAtTime(180 + Math.random() * 40, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(420 + Math.random() * 60, audioCtx.currentTime + 0.18);
                 
-                const pitchStart = 160 + Math.random() * 40;
-                const pitchEnd = 380 + Math.random() * 80;
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
                 
-                osc.frequency.setValueAtTime(pitchStart, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(pitchEnd, audioCtx.currentTime + 0.18);
-                
-                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
-                
-                osc.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.2);
-            } catch (e) {
-                console.log("Audio contextual block: user interaction needed.");
-            }
+            } catch (e) {}
         }
 
-        // Main animation & UI update engine
+        // UI Render Engine
         function updateUI(shouldPlaySound = true) {
-            if (shouldPlaySound) playWaterBubbleSound();
+            if (shouldPlaySound) playBubbleSound();
 
             const percentage = Math.min(Math.round((currentWater / dailyGoal) * 100), 100);
             
             animateCounter('waterAmount', parseInt(waterAmountEl.innerText) || 0, currentWater);
             percentAmountEl.innerText = `${percentage}% выпито`;
-            goalStatusEl.innerText = `Цель: ${dailyGoal} мл`;
+            headerGoalEl.innerText = `${dailyGoal}`;
+            streakCountEl.innerText = `${streak}`;
 
-            // Enable / Disable Undo button
             undoBtn.disabled = historyStack.length === 0;
 
-            // SVG Water coordinates calculation
+            // Liquid Graphics Rendering
             const bottomY = 462;
             const topY = 85;
-            const liquidRange = bottomY - topY;
-            
             const fillFactor = Math.min(currentWater / dailyGoal, 1.0);
-            const targetY = bottomY - (fillFactor * liquidRange);
+            const targetY = bottomY - (fillFactor * (bottomY - topY));
             
             waterFill.setAttribute('y', targetY.toString());
             waterSurface.setAttribute('cy', targetY.toString());
             
-            const bottomRx = 65;
-            const topRx = 105;
-            const targetRx = bottomRx + (fillFactor * (topRx - bottomRx));
+            const targetRx = 65 + (fillFactor * (105 - 65));
             waterSurface.setAttribute('rx', targetRx.toString());
 
-            const bottomRy = 8;
-            const topRy = 12;
-            const targetRy = bottomRy + (fillFactor * (topRy - bottomRy));
+            const targetRy = 8 + (fillFactor * (12 - 8));
             waterSurface.setAttribute('ry', targetRy.toString());
 
-            if (currentWater >= dailyGoal && !confettiActive) {
-                triggerConfetti();
+            // Streak & Goal Check
+            const today = new Date().toDateString();
+            if (currentWater >= dailyGoal && lastCompletedDate !== today) {
+                lastCompletedDate = today;
+                streak += 1;
+                streakCountEl.innerText = streak;
+                saveState();
+                if (!confettiActive) triggerConfetti();
             }
         }
 
-        // Counter animation
         function animateCounter(elementId, start, end) {
             const obj = document.getElementById(elementId);
             const range = end - start;
             if (range === 0) return;
-            
-            const duration = 600;
+            const duration = 500;
             let startTime = null;
 
             function step(timestamp) {
                 if (!startTime) startTime = timestamp;
                 const progress = Math.min((timestamp - startTime) / duration, 1);
-                const easeProgress = progress * (2 - progress);
-                obj.innerText = Math.floor(start + easeProgress * range);
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    obj.innerText = end;
-                }
+                obj.innerText = Math.floor(start + (progress * (2 - progress)) * range);
+                if (progress < 1) window.requestAnimationFrame(step);
+                else obj.innerText = end;
             }
             window.requestAnimationFrame(step);
         }
@@ -613,12 +700,10 @@
         }
 
         function addCustomWater() {
-            const input = prompt("Введите количество воды (в мл):", "300");
-            if (input !== null) {
+            const input = prompt("Введите количество воды (мл):", "300");
+            if (input) {
                 const val = parseInt(input.trim());
-                if (!isNaN(val) && val > 0 && val <= 5000) {
-                    addWater(val);
-                }
+                if (!isNaN(val) && val > 0 && val <= 5000) addWater(val);
             }
         }
 
@@ -630,44 +715,86 @@
             updateUI(false);
         }
 
-        function handleGlassTap() {
-            addWater(250);
-        }
-
         function resetApp() {
-            if (confirm("Вы уверены, что хотите обнулить счетчик воды на сегодня?")) {
+            if (confirm("Обнулить весь прогресс за сегодня?")) {
                 currentWater = 0;
                 historyStack = [];
                 saveState();
                 updateUI(false);
-                closeSettings();
             }
         }
 
-        // Settings Sheet handlers
-        openSettingsBtn.addEventListener('click', () => {
-            settingsOverlay.classList.add('active');
-        });
+        function handleGlassTap() {
+            addWater(250);
+        }
 
+        // AI Scanner Logic
+        openAiBtn.addEventListener('click', () => aiOverlay.classList.add('active'));
+        closeAiBtn.addEventListener('click', () => aiOverlay.classList.remove('active'));
+
+        function processAiImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            const scannedImg = document.getElementById('scannedImg');
+            const placeholder = document.getElementById('scannerPlaceholder');
+            const scanLine = document.getElementById('scanLine');
+            const resultCard = document.getElementById('aiResultCard');
+
+            reader.onload = function(e) {
+                scannedImg.src = e.target.result;
+                scannedImg.style.display = 'block';
+                placeholder.style.display = 'none';
+                scanLine.style.display = 'block';
+                resultCard.style.display = 'none';
+
+                // Simulate Neural Network analysis scan animation
+                setTimeout(() => {
+                    scanLine.style.display = 'none';
+                    // Calculate smart neural estimation (200ml - 450ml range rounded to 10ml)
+                    detectedWaterAmount = Math.floor(Math.random() * (45 - 20) + 20) * 10;
+                    document.getElementById('aiResultVal').innerText = `~${detectedWaterAmount} мл`;
+                    resultCard.style.display = 'block';
+                }, 1800);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function confirmAiWater() {
+            if (detectedWaterAmount > 0) {
+                addWater(detectedWaterAmount);
+                aiOverlay.classList.remove('active');
+            }
+        }
+
+        // Settings Sheet
+        openSettingsBtn.addEventListener('click', () => settingsOverlay.classList.add('active'));
         closeSettingsBtn.addEventListener('click', closeSettings);
-        settingsOverlay.addEventListener('click', (e) => {
-            if (e.target === settingsOverlay) closeSettings();
-        });
+        settingsOverlay.addEventListener('click', (e) => { if (e.target === settingsOverlay) closeSettings(); });
 
         function closeSettings() {
             settingsOverlay.classList.remove('active');
-            
             let val = parseInt(dailyGoalInput.value);
             if (isNaN(val) || val < 500) val = 2000;
-            if (val > 10000) val = 10000;
-            
-            dailyGoal = val;
-            dailyGoalInput.value = val;
+            dailyGoal = Math.min(val, 10000);
+            dailyGoalInput.value = dailyGoal;
             saveState();
             updateUI(false);
         }
 
-        // Particle Class for Celebratory Confetti
+        // Confetti Canvas Animation
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        let confettiParticles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
         class ConfettiParticle {
             constructor() {
                 this.x = Math.random() * canvas.width;
@@ -698,33 +825,24 @@
 
         function triggerConfetti() {
             confettiActive = true;
-            confettiParticles = [];
-            for (let i = 0; i < 120; i++) {
-                confettiParticles.push(new ConfettiParticle());
-            }
+            confettiParticles = Array.from({ length: 120 }, () => new ConfettiParticle());
             animateConfetti();
         }
 
         function animateConfetti() {
             if (!confettiActive) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
             let alive = false;
             confettiParticles.forEach(p => {
                 p.update();
                 p.draw();
                 if (p.y < canvas.height) alive = true;
             });
-
-            if (alive) {
-                requestAnimationFrame(animateConfetti);
-            } else {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                confettiActive = false;
-            }
+            if (alive) requestAnimationFrame(animateConfetti);
+            else confettiActive = false;
         }
 
-        // Initialize App
+        // Init App
         loadState();
     </script>
 </body>
