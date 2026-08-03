@@ -156,7 +156,6 @@
 
         .glass-wrapper:active .glass-svg { transform: scale(0.97); }
 
-        /* Реалистичная падающая струя воды */
         .pouring-stream {
             position: absolute;
             top: -90px;
@@ -169,7 +168,6 @@
             pointer-events: none;
             opacity: 0;
             z-index: 12;
-            filter: drop-shadow(0 0 6px rgba(59,130,246,0.6));
         }
 
         .pouring-stream.animate {
@@ -183,7 +181,6 @@
             100% { height: 0px; opacity: 0; top: 30px; width: 4px; }
         }
 
-        /* Брызги при ударе струи о поверхность */
         .splash-container {
             position: absolute;
             top: 70px;
@@ -201,7 +198,6 @@
             background: #93c5fd;
             border-radius: 50%;
             opacity: 0;
-            box-shadow: 0 0 4px rgba(59,130,246,0.8);
         }
 
         .splash-container.animate .splash-drop {
@@ -219,7 +215,6 @@
             100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
         }
 
-        /* Анимация волн внутри стакана */
         .wave-path {
             animation: waveMove 3s infinite linear;
         }
@@ -229,13 +224,20 @@
             100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
         }
 
-        .flying-success-drop {
-            position: fixed;
-            font-size: 36px;
-            z-index: 200;
-            pointer-events: none;
-            transition: all 0.9s cubic-bezier(0.15, 0.85, 0.35, 1.2);
-            transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        /* Полноэкранная Duolingo-анимация перехода */
+        #duoAnimationScreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #ffffff; z-index: 999;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #duoAnimationScreen.active { opacity: 1; pointer-events: auto; }
+
+        .duo-anim-element {
+            position: absolute;
+            font-size: 80px;
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            transform: translate(-50%, -50%) scale(0);
             opacity: 0;
         }
 
@@ -307,10 +309,20 @@
             aspect-ratio: 1; border-radius: 10px; background: #f1f3f5;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             font-size: 12px; font-weight: 600; color: var(--text-main); position: relative;
+            transition: all 0.3s ease;
         }
         .calendar-cell.completed { background: #dbeafe; color: var(--water-dark); border: 1.5px solid var(--water-blue); }
         .calendar-cell.completed::after { content: "💧"; font-size: 9px; position: absolute; bottom: 2px; }
         .calendar-cell.today { box-shadow: 0 0 0 2px var(--text-main); }
+        
+        /* Эффект синего свечения и увеличения для цифры дня при успешном завершении */
+        .calendar-cell.glow-active {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            transform: scale(1.25);
+            box-shadow: 0 0 25px rgba(37, 99, 235, 0.8), 0 0 10px rgba(37, 99, 235, 1) !important;
+            z-index: 10;
+        }
 
         .streak-card { text-align: center; padding: 10px 10px; }
         .streak-big-icon { font-size: 60px; display: inline-block; animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -365,6 +377,11 @@
 <body>
 
     <canvas id="confetti"></canvas>
+
+    <!-- Полноэкранный анимационный экран в стиле Duolingo -->
+    <div id="duoAnimationScreen">
+        <div id="duoAnimObject" class="duo-anim-element">💧</div>
+    </div>
 
     <div class="header">
         <div class="header-left">
@@ -422,7 +439,6 @@
             <ellipse cx="150" cy="470" rx="72" ry="12" fill="rgba(0,0,0,0.04)" />
             <polygon points="45,80 255,80 215,460 85,460" fill="rgba(255, 255, 255, 0.45)" />
             <g clip-path="url(#water-clip)">
-                <!-- Группа воды с плавной волной -->
                 <g id="water-group" transform="translate(0, 462)" style="transition: transform 0.9s cubic-bezier(0.25, 1, 0.5, 1);">
                     <path class="wave-path" fill="url(#water-grad)" />
                 </g>
@@ -605,11 +621,9 @@
 
         function triggerPourAnimation() {
             playBubbleSound();
-            
             pouringStream.classList.remove('animate');
             splashContainer.classList.remove('animate');
             void pouringStream.offsetWidth;
-            
             pouringStream.classList.add('animate');
             splashContainer.classList.add('animate');
         }
@@ -643,7 +657,7 @@
                 saveState();
                 
                 setTimeout(() => {
-                    animateStreakFlyToCounter(() => {
+                    runDuolingoSuccessAnimation(() => {
                         streak += 1;
                         streakCountEl.innerText = streak;
                         modalStreakCountEl.innerText = streak;
@@ -651,38 +665,62 @@
                         openStreakModal();
                         if (!confettiActive) triggerConfetti();
                     });
-                }, 500);
+                }, 400);
             }
         }
 
-        function animateStreakFlyToCounter(callback) {
-            const glassRect = document.getElementById('glassTapArea').getBoundingClientRect();
-            const streakRect = openStreakBtn.getBoundingClientRect();
-
-            const flyingDrop = document.createElement('div');
-            flyingDrop.className = 'flying-success-drop';
-            flyingDrop.innerHTML = '💧';
-            flyingDrop.style.left = `${glassRect.left + glassRect.width / 2}px`;
-            flyingDrop.style.top = `${glassRect.top + glassRect.height / 2}px`;
-            document.body.appendChild(flyingDrop);
-
-            void flyingDrop.offsetWidth;
-
-            flyingDrop.style.opacity = '1';
-            flyingDrop.style.transform = `translate(-50%, -50%) scale(1.4) rotate(360deg)`;
-            flyingDrop.style.left = `${streakRect.left + streakRect.width / 2}px`;
-            flyingDrop.style.top = `${streakRect.top + streakRect.height / 2}px`;
+        /* Эпичная Duolingo-анимация: Белый экран -> Капля -> Водоворот -> Залет в цифру дня */
+        function runDuolingoSuccessAnimation(callback) {
+            const screen = document.getElementById('duoAnimationScreen');
+            const animObj = document.getElementById('duoAnimObject');
+            
+            screen.classList.add('active');
+            
+            // Шаг 1: Появление красивой капли по центру экрана
+            animObj.innerText = '💧';
+            animObj.style.left = '50vw';
+            animObj.style.top = '50vh';
+            animObj.style.transform = 'translate(-50%, -50%) scale(1.5) rotate(0deg)';
+            animObj.style.opacity = '1';
 
             setTimeout(() => {
-                flyingDrop.remove();
-                streakCountEl.style.transform = 'scale(1.4)';
-                streakCountEl.style.color = '#2563eb';
-                setTimeout(() => {
-                    streakCountEl.style.transform = 'scale(1)';
-                    streakCountEl.style.color = '';
-                }, 300);
+                // Шаг 2: Капля плавно переходит в синий вихрь-водоворот
+                animObj.innerText = '🌀';
+                animObj.style.transform = 'translate(-50%, -50%) scale(3.5) rotate(720deg)';
+                animObj.style.transition = 'all 0.9s cubic-bezier(0.38, 1.65, 0.6, 1)';
+            }, 600);
+
+            setTimeout(() => {
+                // Шаг 3: Водоворот резко сжимается и летит в ячейку сегодняшнего дня в календаре
+                // Предварительно открываем модалку календаря в фоне, чтобы ячейка существовала в DOM
+                openStreakModal();
+                
+                // Находим сегодняшнюю ячейку в календаре
+                const todayCell = document.querySelector('.calendar-cell.today');
+                if (todayCell) {
+                    const rect = todayCell.getBoundingClientRect();
+                    const targetX = rect.left + rect.width / 2;
+                    const targetY = rect.top + rect.height / 2;
+
+                    animObj.style.left = `${targetX}px`;
+                    animObj.style.top = `${targetY}px`;
+                    animObj.style.transform = 'translate(-50%, -50%) scale(0.2) rotate(1080deg)';
+                    animObj.style.opacity = '0.5';
+                }
+            }, 1600);
+
+            setTimeout(() => {
+                // Шаг 4: Убираем белый экран, а цифра дня загорается синим свечением
+                screen.classList.remove('active');
+                animObj.style.transition = 'none'; // сброс стилей капли
+                
+                const todayCell = document.querySelector('.calendar-cell.today');
+                if (todayCell) {
+                    todayCell.classList.add('completed', 'glow-active');
+                }
+
                 if (callback) callback();
-            }, 900);
+            }, 2500);
         }
 
         function animateCounter(elementId, start, end) {
