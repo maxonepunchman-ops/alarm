@@ -223,37 +223,21 @@
             100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
         }
 
-        /* Полноэкранный белый экран для поздравления */
+        /* Полноэкранный слой для проигрывания твоего видео на белом фоне */
         #proAnimScreen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #ffffff; z-index: 999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
         }
         #proAnimScreen.active { opacity: 1; pointer-events: auto; }
 
-        .goal-achieved-content {
-            text-align: center;
-            padding: 20px;
-            animation: scaleUpContent 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        #proAnimVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #ffffff;
         }
-
-        @keyframes scaleUpContent {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .goal-achieved-icon { font-size: 80px; margin-bottom: 15px; display: inline-block; animation: bounceIn 0.8s infinite alternate; }
-        .goal-achieved-title { font-size: 28px; font-weight: 800; color: var(--water-dark); margin-bottom: 8px; }
-        .goal-achieved-text { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 25px; }
-        
-        .btn-celebrate-close {
-            background: var(--water-blue); color: white; border: none;
-            padding: 14px 32px; border-radius: 16px; font-size: 16px; font-weight: 700;
-            cursor: pointer; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
-            transition: transform 0.2s;
-        }
-        .btn-celebrate-close:active { transform: scale(0.95); }
 
         .controls {
             width: 100%;
@@ -384,12 +368,7 @@
     <canvas id="confetti"></canvas>
 
     <div id="proAnimScreen">
-        <div class="goal-achieved-content">
-            <div class="goal-achieved-icon">🎉</div>
-            <div class="goal-achieved-title">Цель выполнена!</div>
-            <div class="goal-achieved-text">Ударный режим: <span id="screenStreakCount">0</span> дней подряд 🔥</div>
-            <button class="btn-celebrate-close" onclick="closeGoalScreen()">Отлично!</button>
-        </div>
+        <video id="proAnimVideo" muted playsinline webkit-playsinline src="data:video/quicktime;base64,AAAAJGZ0eXBxcm9jAAAAAG1wbzQAAAApcHVzaAAAAAZtb292AAAAbGxtdmhkAAAAAMt2d4DLdnfAAAAAAwAAAHQAAAA..."></video>
     </div>
 
     <div class="header">
@@ -547,7 +526,6 @@
         const headerGoalEl = document.getElementById('headerGoal');
         const streakCountEl = document.getElementById('streakCount');
         const modalStreakCountEl = document.getElementById('modalStreakCount');
-        const screenStreakCountEl = document.getElementById('screenStreakCount');
         const waterGroup = document.getElementById('water-group');
         const undoBtn = document.getElementById('undoBtn');
         const pouringStream = document.getElementById('pouringStream');
@@ -664,28 +642,36 @@
             
             if (currentWater >= dailyGoal && oldWaterValue < dailyGoal && !completedDays.includes(todayStr)) {
                 completedDays.push(todayStr);
-                streak += 1;
                 saveState();
                 
                 setTimeout(() => {
-                    showGoalAchievedScreen();
-                    if (!confettiActive) triggerConfetti();
+                    playProAnimation(() => {
+                        streak += 1;
+                        streakCountEl.innerText = streak;
+                        modalStreakCountEl.innerText = streak;
+                        saveState();
+                        openStreakModal();
+                        if (!confettiActive) triggerConfetti();
+                    });
                 }, 400);
             }
         }
 
-        // Показ белого экрана с поздравлением и обновленным ударным режимом
-        function showGoalAchievedScreen() {
+        // Воспроизведение твоего видео при достижении дневной нормы
+        function playProAnimation(callback) {
             const screen = document.getElementById('proAnimScreen');
-            screenStreakCountEl.innerText = streak;
-            streakCountEl.innerText = streak;
-            modalStreakCountEl.innerText = streak;
+            const video = document.getElementById('proAnimVideo');
+            
             screen.classList.add('active');
-        }
+            video.currentTime = 0;
+            video.play().catch(() => {});
 
-        function closeGoalScreen() {
-            const screen = document.getElementById('proAnimScreen');
-            screen.classList.remove('active');
+            // Время работы твоего видео (примерно 3 секунды до появления единички)
+            setTimeout(() => {
+                video.pause();
+                screen.classList.remove('active');
+                if (callback) callback();
+            }, 3000);
         }
 
         function animateCounter(elementId, start, end) {
