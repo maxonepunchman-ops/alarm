@@ -223,7 +223,7 @@
             100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
         }
 
-        /* Полноэкранный анимационный экран для точного воспроизведения видео-ролика */
+        /* Полноэкранный слой для проигрывания твоего видео при выполнении цели */
         #proAnimScreen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #ffffff; z-index: 999;
@@ -368,7 +368,7 @@
     <canvas id="confetti"></canvas>
 
     <div id="proAnimScreen">
-        <video id="proAnimVideo" muted playsinline webkit-playsinline></video>
+        <video id="proAnimVideo" muted playsinline webkit-playsinline src="data:video/quicktime;base64,AAAAJGZ0eXBxcm9jAAAAAG1wbzQAAAApcHVzaAAAAAZtb292AAAAbGxtdmhkAAAAAMt2d4DLdnfAAAAAAwAAAHQAAAA..."></video>
     </div>
 
     <div class="header">
@@ -657,26 +657,21 @@
             }
         }
 
-        /* Воспроизведение точной векторной анимации из видео-контекста */
+        // Воспроизведение твоего видео при достижении дневной нормы
         function playProAnimation(callback) {
             const screen = document.getElementById('proAnimScreen');
             const video = document.getElementById('proAnimVideo');
             
-            // Вшитый стабильный видео-поток сгенерированной анимации водоворота
-            video.src = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"; // В реальном приложении можно заменить на Base64 или локальный файл анимации, либо использовать точную ссылку генерации
-            
             screen.classList.add('active');
-            
-            // Прямой метод воспроизведения сгенерированного ролика водоворота
             video.currentTime = 0;
             video.play().catch(() => {});
 
-            // Длительность анимации подстроена под тайминг видео (например, 2.5 секунды)
+            // Время работы твоего видео (примерно 3 секунды до появления единички)
             setTimeout(() => {
                 video.pause();
                 screen.classList.remove('active');
                 if (callback) callback();
-            }, 2500);
+            }, 3000);
         }
 
         function animateCounter(elementId, start, end) {
