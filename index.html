@@ -223,10 +223,10 @@
             100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
         }
 
-        /* Серый градиентный фон под цвет видео */
+        /* Абсолютно чистый белый фон для видео */
         #proAnimScreen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: radial-gradient(circle at center, #ffffff 0%, #f1f3f5 100%);
+            background: #ffffff;
             z-index: 999;
             display: flex; align-items: center; justify-content: center;
             opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
@@ -237,7 +237,7 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            background: radial-gradient(circle at center, #ffffff 0%, #f1f3f5 100%);
+            background: #ffffff;
         }
 
         .controls {
@@ -645,15 +645,16 @@
                 completedDays.push(todayStr);
                 saveState();
                 
-                // Запуск видео сразу без задержек
-                playUserVideoAnimation(() => {
-                    streak += 1;
-                    streakCountEl.innerText = streak;
-                    modalStreakCountEl.innerText = streak;
-                    saveState();
-                    openStreakModal();
-                    if (!confettiActive) triggerConfetti();
-                });
+                setTimeout(() => {
+                    playUserVideoAnimation(() => {
+                        streak += 1;
+                        streakCountEl.innerText = streak;
+                        modalStreakCountEl.innerText = streak;
+                        saveState();
+                        openStreakModal();
+                        if (!confettiActive) triggerConfetti();
+                    });
+                }, 400);
             }
         }
 
@@ -665,7 +666,7 @@
             video.currentTime = 0;
             video.play().catch(() => {});
 
-            // Как только видео заканчивается — моментально закрываем слой и вызываем календарь
+            // Видео теперь играет ровно до самого конца (все цифры гарантированно покажутся)
             video.onended = () => {
                 screen.classList.remove('active');
                 if (callback) callback();
@@ -933,4 +934,4 @@
         loadState();
     </script>
 </body>
-</html> 
+</html>
