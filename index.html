@@ -223,7 +223,6 @@
             100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
         }
 
-        /* Полноэкранный слой для проигрывания твоего видео на белом фоне */
         #proAnimScreen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #ffffff; z-index: 999;
@@ -368,7 +367,7 @@
     <canvas id="confetti"></canvas>
 
     <div id="proAnimScreen">
-        <video id="proAnimVideo" muted playsinline webkit-playsinline src="data:video/quicktime;base64,AAAAJGZ0eXBxcm9jAAAAAG1wbzQAAAApcHVzaAAAAAZtb292AAAAbGxtdmhkAAAAAMt2d4DLdnfAAAAAAwAAAHQAAAA..."></video>
+        <video id="proAnimVideo" muted playsinline webkit-playsinline src="animation.mov"></video>
     </div>
 
     <div class="header">
@@ -645,7 +644,7 @@
                 saveState();
                 
                 setTimeout(() => {
-                    playProAnimation(() => {
+                    playUserVideoAnimation(() => {
                         streak += 1;
                         streakCountEl.innerText = streak;
                         modalStreakCountEl.innerText = streak;
@@ -657,8 +656,7 @@
             }
         }
 
-        // Воспроизведение твоего видео при достижении дневной нормы
-        function playProAnimation(callback) {
+        function playUserVideoAnimation(callback) {
             const screen = document.getElementById('proAnimScreen');
             const video = document.getElementById('proAnimVideo');
             
@@ -666,12 +664,11 @@
             video.currentTime = 0;
             video.play().catch(() => {});
 
-            // Время работы твоего видео (примерно 3 секунды до появления единички)
             setTimeout(() => {
                 video.pause();
                 screen.classList.remove('active');
                 if (callback) callback();
-            }, 3000);
+            }, 9000); 
         }
 
         function animateCounter(elementId, start, end) {
