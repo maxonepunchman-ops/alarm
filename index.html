@@ -224,7 +224,7 @@
             100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
         }
 
-        /* Полноэкранная Duolingo-анимация перехода */
+        /* Полноэкранный Duolingo-анимационный экран с векторной воронкой */
         #duoAnimationScreen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #ffffff; z-index: 999;
@@ -233,12 +233,25 @@
         }
         #duoAnimationScreen.active { opacity: 1; pointer-events: auto; }
 
-        .duo-anim-element {
+        .vector-vortex-container {
             position: absolute;
-            font-size: 80px;
-            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            width: 140px;
+            height: 140px;
             transform: translate(-50%, -50%) scale(0);
             opacity: 0;
+            transition: all 0.9s cubic-bezier(0.25, 1, 0.5, 1);
+            pointer-events: none;
+        }
+
+        .vector-vortex-svg {
+            width: 100%;
+            height: 100%;
+            animation: spinVortex 2s linear infinite;
+        }
+
+        @keyframes spinVortex {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .controls {
@@ -315,12 +328,12 @@
         .calendar-cell.completed::after { content: "💧"; font-size: 9px; position: absolute; bottom: 2px; }
         .calendar-cell.today { box-shadow: 0 0 0 2px var(--text-main); }
         
-        /* Эффект синего свечения и увеличения для цифры дня при успешном завершении */
+        /* Эффект синего неонового свечения цифры дня */
         .calendar-cell.glow-active {
             background: #2563eb !important;
             color: #ffffff !important;
             transform: scale(1.25);
-            box-shadow: 0 0 25px rgba(37, 99, 235, 0.8), 0 0 10px rgba(37, 99, 235, 1) !important;
+            box-shadow: 0 0 25px rgba(37, 99, 235, 0.9), 0 0 10px rgba(37, 99, 235, 1) !important;
             z-index: 10;
         }
 
@@ -378,9 +391,24 @@
 
     <canvas id="confetti"></canvas>
 
-    <!-- Полноэкранный анимационный экран в стиле Duolingo -->
+    <!-- Полноэкранный анимационный экран с векторной воронкой -->
     <div id="duoAnimationScreen">
-        <div id="duoAnimObject" class="duo-anim-element">💧</div>
+        <div id="vectorVortex" class="vector-vortex-container">
+            <svg class="vector-vortex-svg" viewBox="0 0 200 200">
+                <defs>
+                    <radialGradient id="vortexGrad" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+                        <stop offset="35%" stop-color="#93c5fd" stop-opacity="0.9"/>
+                        <stop offset="75%" stop-color="#2563eb" stop-opacity="0.8"/>
+                        <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.2"/>
+                    </radialGradient>
+                </defs>
+                <!-- Закрученные векторные лепестки воронки -->
+                <path d="M100,100 C100,40 160,40 160,100 C160,160 40,160 40,100 C40,40 140,20 180,80" fill="none" stroke="url(#vortexGrad)" stroke-width="12" stroke-linecap="round"/>
+                <path d="M100,100 C140,100 140,60 100,60 C60,60 60,140 100,140 C140,140 180,100 120,40" fill="none" stroke="url(#vortexGrad)" stroke-width="8" stroke-linecap="round"/>
+                <circle cx="100" cy="100" r="15" fill="#ffffff" />
+            </svg>
+        </div>
     </div>
 
     <div class="header">
@@ -657,7 +685,7 @@
                 saveState();
                 
                 setTimeout(() => {
-                    runDuolingoSuccessAnimation(() => {
+                    runVectorVortexAnimation(() => {
                         streak += 1;
                         streakCountEl.innerText = streak;
                         modalStreakCountEl.innerText = streak;
@@ -669,50 +697,46 @@
             }
         }
 
-        /* Эпичная Duolingo-анимация: Белый экран -> Капля -> Водоворот -> Залет в цифру дня */
-        function runDuolingoSuccessAnimation(callback) {
+        /* Эпичная векторная анимация воронки */
+        function runVectorVortexAnimation(callback) {
             const screen = document.getElementById('duoAnimationScreen');
-            const animObj = document.getElementById('duoAnimObject');
+            const vortex = document.getElementById('vectorVortex');
             
             screen.classList.add('active');
             
-            // Шаг 1: Появление красивой капли по центру экрана
-            animObj.innerText = '💧';
-            animObj.style.left = '50vw';
-            animObj.style.top = '50vh';
-            animObj.style.transform = 'translate(-50%, -50%) scale(1.5) rotate(0deg)';
-            animObj.style.opacity = '1';
+            // Шаг 1: Появление векторной воронки по центру экрана
+            vortex.style.left = '50vw';
+            vortex.style.top = '50vh';
+            vortex.style.transform = 'translate(-50%, -50%) scale(1.4) rotate(0deg)';
+            vortex.style.opacity = '1';
 
             setTimeout(() => {
-                // Шаг 2: Капля плавно переходит в синий вихрь-водоворот
-                animObj.innerText = '🌀';
-                animObj.style.transform = 'translate(-50%, -50%) scale(3.5) rotate(720deg)';
-                animObj.style.transition = 'all 0.9s cubic-bezier(0.38, 1.65, 0.6, 1)';
+                // Шаг 2: Ускоряем вращение и увеличиваем воронку (эффект водоворота)
+                vortex.style.transform = 'translate(-50%, -50%) scale(2.8) rotate(540deg)';
+                vortex.style.transition = 'all 0.9s cubic-bezier(0.38, 1.65, 0.6, 1)';
             }, 600);
 
             setTimeout(() => {
-                // Шаг 3: Водоворот резко сжимается и летит в ячейку сегодняшнего дня в календаре
-                // Предварительно открываем модалку календаря в фоне, чтобы ячейка существовала в DOM
+                // Шаг 3: Водоворот резко сжимается в точку и летит в ячейку сегодняшнего дня
                 openStreakModal();
                 
-                // Находим сегодняшнюю ячейку в календаре
                 const todayCell = document.querySelector('.calendar-cell.today');
                 if (todayCell) {
                     const rect = todayCell.getBoundingClientRect();
                     const targetX = rect.left + rect.width / 2;
                     const targetY = rect.top + rect.height / 2;
 
-                    animObj.style.left = `${targetX}px`;
-                    animObj.style.top = `${targetY}px`;
-                    animObj.style.transform = 'translate(-50%, -50%) scale(0.2) rotate(1080deg)';
-                    animObj.style.opacity = '0.5';
+                    vortex.style.left = `${targetX}px`;
+                    vortex.style.top = `${targetY}px`;
+                    vortex.style.transform = 'translate(-50%, -50%) scale(0.15) rotate(1080deg)';
+                    vortex.style.opacity = '0.3';
                 }
             }, 1600);
 
             setTimeout(() => {
-                // Шаг 4: Убираем белый экран, а цифра дня загорается синим свечением
+                // Шаг 4: Убираем белый экран, а цифра дня загорается синим неоновым свечением
                 screen.classList.remove('active');
-                animObj.style.transition = 'none'; // сброс стилей капли
+                vortex.style.transition = 'none';
                 
                 const todayCell = document.querySelector('.calendar-cell.today');
                 if (todayCell) {
