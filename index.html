@@ -223,14 +223,19 @@
             100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
         }
 
-        /* Серый градиентный фон под цвет видео */
+        /* Серый градиентный фон под цвет 
         #proAnimScreen {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: radial-gradient(circle at center, #ffffff 0%, #ffffff 0%);
-            z-index: 999;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
-        }
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: #ffffff;
+    z-index: 999;
+    display: flex; 
+    align-items: flex-start; /* Поднимает анимацию в верхнюю часть */
+    justify-content: center;
+    padding-top: 40px; /* Регулируй этот отступ: чем больше цифра, тем ниже опустится видео, чем меньше (или 0) — тем выше */
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    overflow: hidden;
+}
+
         #proAnimScreen.active { opacity: 1; pointer-events: auto; }
 
         #proAnimVideo {
