@@ -223,7 +223,6 @@
             100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
         }
 
-        /* Экран для видео со стаканом */
         #proAnimScreen {
             position: fixed; 
             top: 0; 
@@ -652,12 +651,13 @@
             waterGroup.style.transform = `translate(0px, ${targetY - 462}px)`;
         }
 
-        // Надежная функция анимации видео БЕЗ зависаний
-        function playWaterAnimation(addedAmount, callback) {
+        // Надежное проигрывание видео без зависания интерфейса
+        function playWaterAnimation(onComplete) {
             const screen = document.getElementById('proAnimScreen');
             const video = document.getElementById('proAnimVideo');
+            
             if (!video) {
-                if (callback) callback();
+                if (onComplete) onComplete();
                 return;
             }
 
@@ -667,30 +667,26 @@
             let playPromise = video.play();
             if (playPromise !== undefined) {
                 playPromise.catch(error => {
-                    console.log("Автоплей заблокирован:", error);
                     screen.classList.remove('active');
-                    if (callback) callback();
+                    if (onComplete) onComplete();
                 });
             }
 
-            // Рассчитываем время проигрывания: если добавили 500мл — играет подольше, если 150мл — чуть быстрее
-            // Общая длина видео принята за ~8 секунд (можно скорректировать под реальную длину animation1.mov)
-            let durationSeconds = (Math.min(addedAmount, 500) / 500) * 8.0;
-            if (durationSeconds < 1.2) durationSeconds = 1.2;
-
-            // Таймер безопасного закрытия видео
-            const timer = setTimeout(() => {
+            let isFinished = false;
+            const finish = () => {
+                if (isFinished) return;
+                isFinished = true;
                 video.pause();
                 screen.classList.remove('active');
-                if (callback) callback();
-            }, durationSeconds * 1000);
+                if (onComplete) onComplete();
+            };
 
-            // Страховка на случай окончания видео раньше времени
+            // Страховка по таймеру (на случай если браузер не вызовет onended)
+            const fallbackTimer = setTimeout(finish, 3000);
+
             video.onended = () => {
-                clearTimeout(timer);
-                video.pause();
-                screen.classList.remove('active');
-                if (callback) callback();
+                clearTimeout(fallbackTimer);
+                finish();
             };
         }
 
@@ -700,22 +696,22 @@
             historyStack.push(amount);
             saveState();
 
-            // Сначала показываем видео со стаканом, а после него сразу обновляем цифры и стакан в приложении
-            playWaterAnimation(amount, () => {
-                updateUI(true);
+            updateUI(true);
 
-                const todayStr = getTodayStr();
-                if (currentWater >= dailyGoal && oldWater < dailyGoal && !completedDays.includes(todayStr)) {
-                    completedDays.push(todayStr);
-                    saveState();
-                    streak += 1;
-                    streakCountEl.innerText = streak;
-                    modalStreakCountEl.innerText = streak;
-                    saveState();
-                    openStreakModal();
-                    if (!confettiActive) triggerConfetti();
-                }
-            });
+            // Проверка достижения цели и ударного режима
+            const todayStr = getTodayStr();
+            if (currentWater >= dailyGoal && oldWater < dailyGoal && !completedDays.includes(todayStr)) {
+                completedDays.push(todayStr);
+                streak += 1;
+                saveState();
+                streakCountEl.innerText = streak;
+                modalStreakCountEl.innerText = streak;
+                openStreakModal();
+                if (!confettiActive) triggerConfetti();
+            }
+
+            // Запускаем видео поверх интерфейса
+            playWaterAnimation();
         }
 
         function addCustomWater() {
@@ -796,6 +792,7 @@
 
         openStreakBtn.addEventListener('click', openStreakModal);
         closeStreakBtn.addEventListener('click', () => streakOverlay.classList.remove('active'));
+        streakOverlay.addEventListener('click', (e) => { if (e.target === streakOverlay) streakOverlay.classList.remove('active'); });
 
         openAiBtn.addEventListener('click', () => aiOverlay.classList.add('active'));
         closeAiBtn.addEventListener('click', () => {
