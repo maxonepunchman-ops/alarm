@@ -223,21 +223,33 @@
             100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
         }
 
-        /* Абсолютно чистый белый фон для видео */
+        /* Экран для видео со стаканом в идеальном качестве */
         #proAnimScreen {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh;
             background: #ffffff;
             z-index: 999;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            opacity: 0; 
+            pointer-events: none; 
+            transition: opacity 0.2s ease;
+            overflow: hidden;
         }
-        #proAnimScreen.active { opacity: 1; pointer-events: auto; }
+        #proAnimScreen.active { 
+            opacity: 1; 
+            pointer-events: auto; 
+        }
 
         #proAnimVideo {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            background: #ffffff;
+            object-fit: contain; /* Сохраняет высокую четкость без пикселей и размытия */
+            background: transparent;
         }
 
         .controls {
@@ -369,7 +381,7 @@
     <canvas id="confetti"></canvas>
 
     <div id="proAnimScreen">
-        <video id="proAnimVideo" playsinline webkit-playsinline src="animation.mov"></video>
+        <video id="proAnimVideo" autoplay muted playsinline webkit-playsinline src="animation1.mov"></video>
     </div>
 
     <div class="header">
@@ -646,7 +658,7 @@
                 saveState();
                 
                 setTimeout(() => {
-                    playUserVideoAnimation(() => {
+                    playWaterAnimation(500, () => {
                         streak += 1;
                         streakCountEl.innerText = streak;
                         modalStreakCountEl.innerText = streak;
@@ -658,19 +670,40 @@
             }
         }
 
-        function playUserVideoAnimation(callback) {
+        // Динамическая анимация стакана по количеству воды
+        function playWaterAnimation(addedAmount, callback) {
             const screen = document.getElementById('proAnimScreen');
             const video = document.getElementById('proAnimVideo');
+            if (!video) return;
+
+            const maxPortion = 500; // Максимальная порция для полного стакана
+            const totalDuration = video.duration || 9.0;
             
+            let targetDuration = (Math.min(addedAmount, maxPortion) / maxPortion) * totalDuration;
+            if (targetDuration < 1.5) targetDuration = 1.5;
+
             screen.classList.add('active');
             video.currentTime = 0;
-            video.play().catch(() => {});
+            
+            let playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Ошибка воспроизведения:", error);
+                    screen.classList.remove('active');
+                });
+            }
 
-            // Видео теперь играет ровно до самого конца (все цифры гарантированно покажутся)
-            video.onended = () => {
-                screen.classList.remove('active');
-                if (callback) callback();
-            };
+            const checkInterval = setInterval(() => {
+                if (video.currentTime >= targetDuration || video.ended) {
+                    video.pause();
+                    clearInterval(checkInterval);
+                    
+                    setTimeout(() => {
+                        screen.classList.remove('active');
+                        if (callback) callback();
+                    }, 600);
+                }
+            }, 50);
         }
 
         function animateCounter(elementId, start, end) {
@@ -694,7 +727,11 @@
             currentWater += amount;
             historyStack.push(amount);
             saveState();
-            updateUI(true, oldWater);
+            
+            // Запускаем видео-анимацию стакана в зависимости от добавленного объема
+            playWaterAnimation(amount, () => {
+                updateUI(true, oldWater);
+            });
         }
 
         function addCustomWater() {
