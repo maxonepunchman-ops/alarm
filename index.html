@@ -223,7 +223,7 @@
             100% { d: path("M 40,0 Q 95,-12 150,0 Q 205,12 260,0 L 260,400 L 40,400 Z"); }
         }
 
-        /* Экран для видео со стаканом в идеальном качестве */
+        /* Экран для видео со стаканом */
         #proAnimScreen {
             position: fixed; 
             top: 0; 
@@ -248,7 +248,7 @@
         #proAnimVideo {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Сохраняет высокую четкость без пикселей и размытия */
+            object-fit: contain;
             background: transparent;
         }
 
@@ -381,7 +381,7 @@
     <canvas id="confetti"></canvas>
 
     <div id="proAnimScreen">
-        <video id="proAnimVideo" autoplay muted playsinline webkit-playsinline src="animation1.MOV"></video>
+        <video id="proAnimVideo" muted playsinline webkit-playsinline src="animation1.MOV"></video>
     </div>
 
     <div class="header">
@@ -586,7 +586,7 @@
             }
 
             dailyGoalInput.value = dailyGoal;
-            updateUI(false, currentWater);
+            updateUI(false);
         }
 
         function saveState() {
@@ -629,14 +629,14 @@
             splashContainer.classList.add('animate');
         }
 
-        function updateUI(shouldPlaySound = true, oldWaterValue = 0) {
+        function updateUI(shouldPlaySound = true) {
             if (shouldPlaySound) {
                 triggerPourAnimation();
             }
 
             const percentage = Math.min(Math.round((currentWater / dailyGoal) * 100), 100);
             
-            animateCounter('waterAmount', parseInt(waterAmountEl.innerText) || 0, currentWater);
+            waterAmountEl.innerText = currentWater;
             percentAmountEl.innerText = `${percentage}% выпито`;
             headerGoalEl.innerText = `${dailyGoal}`;
             streakCountEl.innerText = `${streak}`;
@@ -650,37 +650,16 @@
             const targetY = bottomY - (fillFactor * (bottomY - topY));
             
             waterGroup.style.transform = `translate(0px, ${targetY - 462}px)`;
-
-            const todayStr = getTodayStr();
-            
-            if (currentWater >= dailyGoal && oldWaterValue < dailyGoal && !completedDays.includes(todayStr)) {
-                completedDays.push(todayStr);
-                saveState();
-                
-                setTimeout(() => {
-                    playWaterAnimation(500, () => {
-                        streak += 1;
-                        streakCountEl.innerText = streak;
-                        modalStreakCountEl.innerText = streak;
-                        saveState();
-                        openStreakModal();
-                        if (!confettiActive) triggerConfetti();
-                    });
-                }, 400);
-            }
         }
 
-        // Динамическая анимация стакана по количеству воды
+        // Надежная функция анимации видео БЕЗ зависаний
         function playWaterAnimation(addedAmount, callback) {
             const screen = document.getElementById('proAnimScreen');
             const video = document.getElementById('proAnimVideo');
-            if (!video) return;
-
-            const maxPortion = 500; // Максимальная порция для полного стакана
-            const totalDuration = video.duration || 9.0;
-            
-            let targetDuration = (Math.min(addedAmount, maxPortion) / maxPortion) * totalDuration;
-            if (targetDuration < 1.5) targetDuration = 1.5;
+            if (!video) {
+                if (callback) callback();
+                return;
+            }
 
             screen.classList.add('active');
             video.currentTime = 0;
@@ -688,38 +667,31 @@
             let playPromise = video.play();
             if (playPromise !== undefined) {
                 playPromise.catch(error => {
-                    console.log("Ошибка воспроизведения:", error);
+                    console.log("Автоплей заблокирован:", error);
                     screen.classList.remove('active');
+                    if (callback) callback();
                 });
             }
 
-            const checkInterval = setInterval(() => {
-                if (video.currentTime >= targetDuration || video.ended) {
-                    video.pause();
-                    clearInterval(checkInterval);
-                    
-                    setTimeout(() => {
-                        screen.classList.remove('active');
-                        if (callback) callback();
-                    }, 600);
-                }
-            }, 50);
-        }
+            // Рассчитываем время проигрывания: если добавили 500мл — играет подольше, если 150мл — чуть быстрее
+            // Общая длина видео принята за ~8 секунд (можно скорректировать под реальную длину animation1.mov)
+            let durationSeconds = (Math.min(addedAmount, 500) / 500) * 8.0;
+            if (durationSeconds < 1.2) durationSeconds = 1.2;
 
-        function animateCounter(elementId, start, end) {
-            const obj = document.getElementById(elementId);
-            const range = end - start;
-            if (range === 0) return;
-            const duration = 500;
-            let startTime = null;
-            function step(timestamp) {
-                if (!startTime) startTime = timestamp;
-                const progress = Math.min((timestamp - startTime) / duration, 1);
-                obj.innerText = Math.floor(start + (progress * (2 - progress)) * range);
-                if (progress < 1) window.requestAnimationFrame(step);
-                else obj.innerText = end;
-            }
-            window.requestAnimationFrame(step);
+            // Таймер безопасного закрытия видео
+            const timer = setTimeout(() => {
+                video.pause();
+                screen.classList.remove('active');
+                if (callback) callback();
+            }, durationSeconds * 1000);
+
+            // Страховка на случай окончания видео раньше времени
+            video.onended = () => {
+                clearTimeout(timer);
+                video.pause();
+                screen.classList.remove('active');
+                if (callback) callback();
+            };
         }
 
         function addWater(amount) {
@@ -727,10 +699,22 @@
             currentWater += amount;
             historyStack.push(amount);
             saveState();
-            
-            // Запускаем видео-анимацию стакана в зависимости от добавленного объема
+
+            // Сначала показываем видео со стаканом, а после него сразу обновляем цифры и стакан в приложении
             playWaterAnimation(amount, () => {
-                updateUI(true, oldWater);
+                updateUI(true);
+
+                const todayStr = getTodayStr();
+                if (currentWater >= dailyGoal && oldWater < dailyGoal && !completedDays.includes(todayStr)) {
+                    completedDays.push(todayStr);
+                    saveState();
+                    streak += 1;
+                    streakCountEl.innerText = streak;
+                    modalStreakCountEl.innerText = streak;
+                    saveState();
+                    openStreakModal();
+                    if (!confettiActive) triggerConfetti();
+                }
             });
         }
 
@@ -756,7 +740,7 @@
                 streak = Math.max(0, streak - 1);
             }
             saveState();
-            updateUI(false, currentWater);
+            updateUI(false);
         }
 
         function resetApp() {
@@ -769,7 +753,7 @@
                     streak = Math.max(0, streak - 1);
                 }
                 saveState();
-                updateUI(false, currentWater);
+                updateUI(false);
             }
         }
 
@@ -909,7 +893,7 @@
             dailyGoal = Math.min(val, 10000);
             dailyGoalInput.value = dailyGoal;
             saveState();
-            updateUI(false, currentWater);
+            updateUI(false);
         }
 
         const canvas = document.getElementById('confetti');
