@@ -40,9 +40,9 @@ if uploaded_file is not None:
         right_side = ImageOps.mirror(Image.fromarray(img_array[:, w//2:]))
         right_side_arr = np.array(right_side)
         
-        # Считаем разницу пикселей для оценки асимметрии
+        # Считаем разницу пикселей для оценки асимметрии (исправлены закрывающие скобки)
         min_w = min(left_side.shape[1], right_side_arr.shape[1])
-        diff = np.mean(np.abs(left_side[:, :min_w].astype(float) - right_side_arr[:, :min_w].astype(float))
+        diff = np.mean(np.abs(left_side[:, :min_w].astype(float) - right_side_arr[:, :min_w].astype(float)))
         
         symmetry_score = max(50, min(95, int(100 - (diff / 3))))
         
