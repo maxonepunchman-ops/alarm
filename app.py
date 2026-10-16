@@ -13,7 +13,7 @@ st.markdown("Настоящий разбор внешности с помощь�
 
 # Вставь свой платный ключ в кавычки ниже (например, api_key = "sk-proj-..."),
 # либо вводи его в боковой панели сайта.
-api_key = st.sidebar.text_input("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", value="", type="password")
+api_key = st.sidebar.text_input("Введи OpenAI API Key:", value="", type="password")
 
 uploaded_file = st.file_uploader("Загрузи чёткое фото лица (анфас)", type=["jpg", "jpeg", "png"])
 
