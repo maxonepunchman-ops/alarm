@@ -1,65 +1,65 @@
 import streamlit as st
-import base64
-from openai import OpenAI
+import pandas as pd
+from datetime import date
 
 st.set_page_config(
-    page_title="Real LooksMax AI",
-    page_icon="🔥",
+    page_title="Sleep Tracker",
+    page_icon="😴",
     layout="centered"
 )
 
-st.title("🔥 Real LooksMax AI")
-st.markdown("Analiz vneshnosti cherez GPT-4o.")
+st.title("😴 Трекер сна и восстановления")
+st.markdown("Контролируй режим, анализируй качество отдыха и держи продуктивность на максимуме.")
 
-# Vvedi klyuch tut ili v boku
-api_key = st.sidebar.text_input("OpenAI API Key:", value="", type="password")
+# Инициализация истории сна в памяти сессии
+if "sleep_data" not in st.session_state:
+    st.session_state.sleep_data = []
 
-uploaded_file = st.file_uploader("Zagruzi foto litsa", type=["jpg", "jpeg", "png"])
-
-if uploaded_file and api_key:
-    st.image(uploaded_file, caption="Tvoyo foto", use_column_width=True)
+# Форма для добавления новой записи
+with st.form("sleep_form"):
+    st.subheader("📝 Записать сон")
+    sleep_date = st.date_input("Дата", value=date.today())
+    hours = st.slider("Сколько часов ты спал?", min_value=1.0, max_value=15.0, value=8.0, step=0.5)
+    quality = st.slider("Качество сна (от 1 до 10)", min_value=1, max_value=10, value=8)
+    notes = st.text_input("Заметки (например: лёг поздно, пил кофе, хорошо выспался)")
     
-    if st.button("🚀 Zapustit analiz"):
-        client = OpenAI(api_key=api_key)
-        
-        bytes_data = uploaded_file.getvalue()
-        base64_image = base64.b64encode(bytes_data).decode('utf-8')
-        
-        # Ispolzuem prostoy i chistyy tekst
-        prompt = (
-            "Analyze this photo from a style, grooming, and visual aesthetics perspective. "
-            "Evaluate facial symmetry, jawline structure, skin texture, and haircut. "
-            "Provide a structured looksmaxing guide with steps for 1 month, 3 months, and 6 months. "
-            "Keep the tone direct, motivating, and professional."
-        )
+    submitted = st.form_submit_button("💾 Сохранить запись")
+    if submitted:
+        st.session_state.sleep_data.append({
+            "Дата": sleep_date,
+            "Часы сна": hours,
+            "Качество": quality,
+            "Заметки": notes
+        })
+        st.success("Запись успешно добавлена!")
 
-        with st.spinner("Obrabotka..."):
-            try:
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": prompt},
-                                {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": f"data:image/jpeg;base64,{base64_image}"
-                                    },
-                                },
-                            ],
-                        }
-                    ],
-                    max_tokens=1000,
-                )
-                
-                result_text = response.choices[0].message.content
-                st.success("Gotovo!")
-                st.markdown(result_text)
-
-            except Exception as e:
-                st.error(f"Oshibka: {e}")
-
-elif uploaded_file and not api_key:
-    st.warning("⚠️ Vvedi API Key.")
+# Блок аналитики и графиков
+if st.session_state.sleep_data:
+    st.markdown("---")
+    st.subheader("📊 Твоя статистика")
+    
+    df = pd.DataFrame(st.session_state.sleep_data)
+    df["Дата"] = pd.to_datetime(df["Дата"])
+    df = df.sort_values("Дата")
+    
+    # Таблица с историей
+    st.dataframe(df, use_container_width=True)
+    
+    # График динамики сна
+    st.markdown("### 📈 Динамика продолжительности сна")
+    chart_data = df.set_index("Дата")[["Часы сна"]]
+    st.line_chart(chart_data)
+    
+    # Автоматический анализ последней записи
+    last_entry = st.session_state.sleep_data[-1]
+    last_hours = last_entry["Часы сна"]
+    
+    st.markdown("### 💡 Совет по восстановлению:")
+    if last_hours < 7:
+        st.warning(f"⚠️ Ты спал всего {last_hours} ч. Недостаток сна снижает концентрацию и уровень энергии. Сегодня лучше лечь спать пораньше.")
+    elif last_hours > 10:
+        st.info(f"💤 Ты проспал {last_hours} ч. Иногда организму нужно отоспаться, но избыток сна тоже может вызывать чувство разбитости.")
+    else:
+        st.success(f"🟢 Отличный режим ({last_hours} ч)! Оптимальная продолжительность для восстановления сил.")
+else:
+    st.info("👋 Пока записей нет. Докóжи первую запись через форму выше, чтобы построить графики!")
