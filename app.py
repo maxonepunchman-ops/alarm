@@ -9,7 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# Кастомные CSS стили для темного футуристичного интерфейса
+# Кастомные CSS стили: жесткая сетка квадратиков, крупный шрифт и чистые формы
 st.markdown("""
     <style>
     .stApp {
@@ -27,7 +27,7 @@ st.markdown("""
         display: flex;
         align-items: center;
         gap: 10px;
-        margin-top: 10px;
+        margin-top: 8px;
         font-size: 13px;
         color: #8b949e;
     }
@@ -37,13 +37,32 @@ st.markdown("""
         border-radius: 4px;
         border: 1px solid #30363d;
     }
+    /* Сетка квадратиков как на GitHub */
+    .heatmap-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 15px;
+    }
+    .heat-box {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: 1px solid #30363d;
+    }
+    /* Увеличенный и читаемый текст для полей ввода */
+    label, .stTextInput label, .stSlider label, .stDateInput label {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #e6edf3 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 st.title("🧊 Dark Sleep Matrix & Tracker")
-st.markdown("Твой персональный трекер сна с матрицей активности и графиком среднего арифметического.")
+st.markdown("Твой персональный трекер сна: аккуратная сетка, график и удобный ввод.")
 
-# Инициализация данных в сессии (храним по датам количество часов сна и заметку)
+# Инициализация данных в сессии
 if "sleep_matrix" not in st.session_state:
     st.session_state.sleep_matrix = {
         str(date.today() - timedelta(days=2)): {"sleep": 7.0, "note": "Лёг поздно, устал."},
@@ -51,18 +70,21 @@ if "sleep_matrix" not in st.session_state:
         str(date.today()): {"sleep": 8.5, "note": "Хороший режим."}
     }
 
-# --- ФОРМА ВВОДА ДАННЫХ ---
+# --- НОРМАЛЬНАЯ, ЧИТАЕМАЯ ФОРМА ВВОДА ---
 with st.form("sleep_form", clear_on_submit=True):
-    st.subheader("✍️ Записать сон за день")
-    col1, col2 = st.columns(2)
-    with col1:
-        entry_date = st.date_input("Дата", value=date.today())
-    with col2:
-        sleep_hours = st.slider("Сколько часов ты спал?", min_value=1.0, max_value=15.0, value=9.0, step=0.5)
+    st.subheader("✍️ Добавить запись за день")
     
-    note_text = st.text_area("Заметка / самочувствие:", placeholder="Как спалось, были ли мысли, планы...")
+    entry_date = st.date_input("📅 Выбери дату:", value=date.today())
     
-    submitted = st.form_submit_button("💾 Сохранить в матрицу")
+    st.markdown("<br>", unsafe_allow_html=True)
+    sleep_hours = st.slider("😴 Сколько часов ты спал?", min_value=1.0, max_value=15.0, value=9.0, step=0.5)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    note_text = st.text_area("📝 Заметка / самочувствие:", placeholder="Как спалось, мысли, планы...")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    submitted = st.form_submit_button("💾 Сохранить в матрицу", use_container_width=True)
+    
     if submitted:
         st.session_state.sleep_matrix[str(entry_date)] = {
             "sleep": sleep_hours,
@@ -72,73 +94,52 @@ with st.form("sleep_form", clear_on_submit=True):
 
 st.markdown("---")
 
-# --- ФУНКЦИЯ ЦВЕТА КВАДРАТИКА В ЗАВИСИМОСТИ ОТ СОНЯ ---
+# --- ФУНКЦИЯ ЦВЕТА ---
 def get_sleep_color(hours):
     if hours == 0:
-        return "#21262d"  # Нет данных (темно-серый)
+        return "#21262d"  # Нет данных
     elif hours < 6:
         return "#da3633"  # Красный (критический недосып)
     elif 6 <= hours < 7.5:
-        return "#9e6a03"  # Желтый / оранжевый (умеренный дефицит)
+        return "#9e6a03"  # Оранжевый (маловато)
     elif 7.5 <= hours <= 10:
-        return "#238636"  # Зеленый (идеальная норма для подростка)
+        return "#238636"  # Зеленый (идеал для подростка)
     else:
-        return "#1f6feb"  # Синий (пересып > 10 часов)
+        return "#1f6feb"  # Синий (пересып)
 
-# --- МАТРИЦА КВАДРАТИКОВ (АКТИВНОСТЬ ПО ДНЯМ) ---
+# --- ИДЕАЛЬНАЯ СЕТКА КВАДРАТИКОВ (HEATMAP) ---
 st.subheader("🔥 Матрица сна (Heatmap)")
-st.markdown("Каждый квадратик — один день. Цвет показывает качество сна без лишних цифр.")
+st.markdown("Каждый квадратик — один день. Цвет показывает качество сна.")
 
 days_to_show = 60
 end_date = date.today()
 start_date = end_date - timedelta(days=days_to_show - 1)
 date_list = [start_date + timedelta(days=i) for i in range(days_to_show)]
 
-# Группируем по месяцам для красивых подписей сверху
-current_month = ""
-cols_per_row = 10
-rows = [date_list[i:i + cols_per_row] for i in range(0, len(date_list), cols_per_row)]
+# Рендерим квадратики через компактный flex-контейнер, чтобы они идеально вмещались на экране телефона
+boxes_html = '<div class="heatmap-grid">'
+for d in date_list:
+    d_str = str(d)
+    data = st.session_state.sleep_matrix.get(d_str, {"sleep": 0})
+    color = get_sleep_color(data["sleep"])
+    boxes_html += f'<div class="heat-box" style="background-color: {color};" title="{d_str} | Сон: {data["sleep"]}ч"></div>'
+boxes_html += '</div>'
 
-for row in rows:
-    # Проверяем месяц для заголовка строки
-    row_month = row[0].strftime('%B %Y')
-    if row_month != current_month:
-        current_month = row_month
-        st.markdown(f"<p style='color: #8b949e; font-size: 13px; margin-bottom: 5px; margin-top: 15px;'><b>📅 {current_month}</b></p>", unsafe_allow_html=True)
-    
-    cols = st.columns(len(row))
-    for idx, d in enumerate(row):
-        d_str = str(d)
-        data = st.session_state.sleep_matrix.get(d_str, {"sleep": 0, "note": ""})
-        color = get_sleep_color(data["sleep"])
-        
-        with cols[idx]:
-            # Пустой красивый квадратик с закругленными краями (без цифр)
-            st.markdown(f"""
-                <div style="
-                    background-color: {color};
-                    border-radius: 6px;
-                    height: 38px;
-                    border: 1px solid #30363d;
-                    margin-bottom: 4px;
-                " title="{d_str} | Сон: {data['sleep']}ч"></div>
-            """, unsafe_allow_html=True)
+st.markdown(boxes_html, unsafe_allow_html=True)
 
-# --- ЛЕГЕНДА (ОТДЕЛЬНЫЙ БЛОК СНИЗУ) ---
+# --- ЛЕГЕНДА ОТДЕЛЬНЫМ БЛОКОМ СНИЗУ ---
 st.markdown("""
     <div class="custom-card">
         <b>🎨 Легенда цветов матрицы сна:</b>
-        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 10px;">
-            <div class="legend-box"><div class="color-square" style="background-color: #21262d;"></div> Нет данных</div>
-            <div class="legend-box"><div class="color-square" style="background-color: #da3633;"></div> Меньше 6 часов (Критично)</div>
-            <div class="legend-box"><div class="color-square" style="background-color: #9e6a03;"></div> 6 - 7.5 часов (Маловато)</div>
-            <div class="legend-box"><div class="color-square" style="background-color: #238636;"></div> 7.5 - 10 часов (Идеал для подростка)</div>
-            <div class="legend-box"><div class="color-square" style="background-color: #1f6feb;"></div> Больше 10 часов (Пересып)</div>
-        </div>
+        <div class="legend-box"><div class="color-square" style="background-color: #21262d;"></div> Нет данных</div>
+        <div class="legend-box"><div class="color-square" style="background-color: #da3633;"></div> Меньше 6 часов (Критично)</div>
+        <div class="legend-box"><div class="color-square" style="background-color: #9e6a03;"></div> 6 - 7.5 часов (Маловато)</div>
+        <div class="legend-box"><div class="color-square" style="background-color: #238636;"></div> 7.5 - 10 часов (Идеал для подростка)</div>
+        <div class="legend-box"><div class="color-square" style="background-color: #1f6feb;"></div> Больше 10 часов (Пересып)</div>
     </div>
 """, unsafe_allow_html=True)
 
-# --- ГРАФИК ПРОГРЕССА ПО СРЕДНЕМУ АРИФМЕТИЧЕСКОМУ ---
+# --- ГРАФИК ПРОГРЕССА (СРЕДНЕЕ АРИФМЕТИЧЕСКОЕ) ---
 st.markdown("---")
 st.subheader("📈 График динамики сна (Среднее арифметическое)")
 st.markdown("Кривая показывает изменения продолжительности сна. Поднимается при хорошем отдыхе и опускается при недосыпе.")
@@ -149,8 +150,6 @@ if st.session_state.sleep_matrix:
         df_list.append({"Дата": pd.to_datetime(d_str), "Часы сна": val["sleep"]})
     
     df = pd.DataFrame(df_list).sort_values("Дата")
-    
-    # Считаем скользящее среднее арифметическое для сглаживания кривой графика
     df["Среднее (арифм.)"] = df["Часы сна"].expanding().mean()
     df["Идеальная норма"] = 9.0
     
@@ -165,7 +164,6 @@ if st.session_state.sleep_matrix:
     total_days = len(st.session_state.sleep_matrix)
     avg_sleep = sum([v["sleep"] for v in st.session_state.sleep_matrix.values()]) / total_days
     
-    # Оценка состояния
     if avg_sleep >= 8.5:
         status_text = "🟢 Отличный режим! Ты держишься близко к идеальной подростковой норме в 9 часов. Мозг и тело восстанавливаются на максимум."
         status_color = "#238636"
@@ -179,17 +177,16 @@ if st.session_state.sleep_matrix:
     st.markdown(f"""
         <div class="custom-card">
             <h4 style="margin-top: 0; color: {status_color};">📊 Итоги за весь период:</h4>
-            <p><b>Всего записей:</b> {total_days} дн.</p>
-            <p><b>Средняя продолжительность сна:</b> <code>{avg_sleep:.1f} часа</code> (цель: 9.0 ч.)</p>
+            <p style="font-size: 15px;"><b>Всего записей:</b> {total_days} дн.</p>
+            <p style="font-size: 15px;"><b>Средняя продолжительность сна:</b> <code>{avg_sleep:.1f} часа</code> (цель: 9.0 ч.)</p>
             <hr style="border-color: #30363d;">
-            <p><b>Экспертная оценка:</b><br>{status_text}</p>
+            <p style="font-size: 15px;"><b>Экспертная оценка:</b><br>{status_text}</p>
         </div>
     """, unsafe_allow_html=True)
 
-    # Просмотр заметки по конкретному дню
-    selected_date = st.selectbox("Выбери дату для просмотра заметки:", options=sorted(list(st.session_state.sleep_matrix.keys()), reverse=True))
+    selected_date = st.selectbox("📅 Выбери дату для просмотра заметки:", options=sorted(list(st.session_state.sleep_matrix.keys()), reverse=True))
     if selected_date:
         day_info = st.session_state.sleep_matrix[selected_date]
         st.info(f"📅 **Дата:** {selected_date} | **Сон:** {day_info['sleep']} ч.\n\n📝 **Заметка:** {day_info['note'] if day_info['note'] else 'Заметка пуста'}")
 else:
-    st.info("👋 Добавь хотя бы одну запись через форму выше, чтобы построить матрицу, график и сводку!")
+    st.info("👋 Добавь хотя бы одну запись через форму выше!")
